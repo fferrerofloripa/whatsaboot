@@ -59,12 +59,6 @@ function isAdmin(req, res, next) {
  * Middleware para verificar que el usuario puede acceder a una instancia específica
  */
 function canAccessInstance(req, res, next) {
-    // Los administradores pueden acceder a cualquier instancia
-    if (req.user.role === 'admin') {
-        return next();
-    }
-
-    // Los usuarios normales solo pueden acceder a sus propias instancias
     const instanceId = req.params.instanceId || req.body.instanceId;
     
     if (!instanceId) {
@@ -74,7 +68,7 @@ function canAccessInstance(req, res, next) {
         });
     }
 
-    // Verificar que la instancia pertenece al usuario
+    // Cargar la instancia para todos los usuarios (admin y normales)
     const { WhatsappInstance } = require('../models');
     
     WhatsappInstance.findByPk(instanceId)
@@ -86,6 +80,13 @@ function canAccessInstance(req, res, next) {
                 });
             }
 
+            // Los administradores pueden acceder a cualquier instancia
+            if (req.user.role === 'admin') {
+                req.whatsappInstance = instance;
+                return next();
+            }
+
+            // Los usuarios normales solo pueden acceder a sus propias instancias
             if (instance.userId !== req.user.id) {
                 logger.warn(`Usuario ${req.user.email} intentó acceder a instancia ${instanceId} sin permisos`);
                 return res.status(403).json({
