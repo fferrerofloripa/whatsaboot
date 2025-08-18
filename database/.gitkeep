@@ -1,0 +1,2 @@
+# Este archivo mantiene la carpeta database/ en el repositorio
+# Los archivos .db son ignorados pero la carpeta es necesaria para la aplicación

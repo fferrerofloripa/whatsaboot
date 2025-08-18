@@ -1,0 +1,291 @@
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+                <p class="text-gray-600 mt-1">Bienvenido, <%= user.displayName %></p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="document.getElementById('createInstanceModal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Nueva Instancia
+                </button>
+                <button onclick="alert('JavaScript funciona!')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-sm ml-2">
+                    TEST JS
+                </button>
+                <button onclick="testCreateInstance()" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm ml-2">
+                    TEST QR
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <i class="fas fa-mobile-alt text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Instancias Totales</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= stats.totalInstances %></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Conectadas</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= stats.connectedInstances %></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <i class="fas fa-robot text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Respuestas Auto</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= stats.totalAutoResponses %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- WhatsApp Instances -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Mis Instancias de WhatsApp</h2>
+        </div>
+        
+        <div class="p-6">
+            <% if (instances && instances.length > 0) { %>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <% instances.forEach(function(instance) { %>
+                        <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200" data-instance-id="<%= instance.id %>">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900"><%= instance.numberName %></h3>
+                                <div class="flex items-center space-x-2">
+                                    <% if (instance.status === 'connected') { %>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <i class="fas fa-circle text-green-400 mr-1" style="font-size: 6px;"></i>
+                                            Conectado
+                                        </span>
+                                    <% } else if (instance.status === 'qr_pending') { %>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <i class="fas fa-circle text-yellow-400 mr-1" style="font-size: 6px;"></i>
+                                            Esperando QR
+                                        </span>
+                                    <% } else if (instance.status === 'connecting') { %>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <i class="fas fa-circle text-blue-400 mr-1" style="font-size: 6px;"></i>
+                                            Conectando
+                                        </span>
+                                    <% } else if (instance.status === 'error') { %>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <i class="fas fa-circle text-red-400 mr-1" style="font-size: 6px;"></i>
+                                            Error
+                                        </span>
+                                    <% } else { %>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <i class="fas fa-circle text-gray-400 mr-1" style="font-size: 6px;"></i>
+                                            Desconectado
+                                        </span>
+                                    <% } %>
+                                </div>
+                            </div>
+                            
+                            <% if (instance.phoneNumber) { %>
+                                <p class="text-sm text-gray-600 mb-4">
+                                    <i class="fas fa-phone mr-2"></i>
+                                    +<%= instance.phoneNumber %>
+                                </p>
+                            <% } %>
+                            
+                            <% if (instance.autoResponses && instance.autoResponses.length > 0) { %>
+                                <p class="text-sm text-gray-600 mb-4">
+                                    <i class="fas fa-robot mr-2"></i>
+                                    <%= instance.autoResponses.length %> respuesta(s) automática(s)
+                                </p>
+                            <% } %>
+                            
+                            <% if (instance.lastConnection) { %>
+                                <p class="text-xs text-gray-500 mb-4">
+                                    Última conexión: <%= new Date(instance.lastConnection).toLocaleString('es-ES') %>
+                                </p>
+                            <% } %>
+                            
+                            <!-- QR Code Display with Interactive Tutorial -->
+                            <% if (instance.status === 'qr_pending' && instance.qrCode) { %>
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <p class="text-sm font-medium text-gray-700">Escanea este código QR:</p>
+                                        <button onclick="startQRTutorial()" 
+                                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs flex items-center">
+                                            <i class="fas fa-play mr-1"></i>
+                                            Ver tutorial animado
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- QR Code with enhanced styling -->
+                                    <div class="bg-white p-6 rounded-xl border-2 border-gray-200 text-center qr-container">
+                                        <img id="qr-image" src="<%= instance.qrCode %>" alt="QR Code" 
+                                             class="mx-auto max-w-full h-48 object-contain rounded-lg shadow-lg">
+                                    </div>
+                                    
+                                    <!-- Quick Instructions -->
+                                    <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <p class="text-xs text-blue-700 text-center">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Abre WhatsApp > Menú (⋮) > Dispositivos vinculados > Vincular dispositivo
+                                        </p>
+                                    </div>
+                                </div>
+                            <% } %>
+                            
+                            <!-- Error Message -->
+                            <% if (instance.status === 'error' && instance.errorMessage) { %>
+                                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <p class="text-sm text-red-700">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        <%= instance.errorMessage %>
+                                    </p>
+                                </div>
+                            <% } %>
+                            
+                            <!-- Action buttons -->
+                            <div class="flex flex-wrap gap-2">
+                                <% if (instance.status === 'disconnected' || instance.status === 'error') { %>
+                                    <button onclick="connectInstance(<%= instance.id %>)" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                                        <i class="fas fa-play mr-1"></i>
+                                        Conectar
+                                    </button>
+                                <% } else if (instance.status === 'connected') { %>
+                                    <button onclick="disconnectInstance(<%= instance.id %>)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                                        <i class="fas fa-stop mr-1"></i>
+                                        Desconectar
+                                    </button>
+                                <% } %>
+                                
+                                <a href="/dashboard/instance/<%= instance.id %>" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm inline-block">
+                                    <i class="fas fa-cog mr-1"></i>
+                                    Configurar
+                                </a>
+                                
+                                <button onclick="testMessage(<%= instance.id %>)" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm" <%= instance.status !== 'connected' ? 'disabled' : '' %>>
+                                    <i class="fas fa-paper-plane mr-1"></i>
+                                    Probar
+                                </button>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-12">
+                    <div class="text-gray-400 text-6xl mb-4">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No tienes instancias de WhatsApp</h3>
+                    <p class="text-gray-600 mb-6">Crea tu primera instancia para comenzar a gestionar bots de WhatsApp.</p>
+                    <button onclick="document.getElementById('createInstanceModal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>
+                        Crear Primera Instancia
+                    </button>
+                    <button onclick="alert('JavaScript funciona desde aquí también!')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg mt-2">
+                        TEST JS 2
+                    </button>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Create Instance Modal -->
+<div id="createInstanceModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center h-full p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Nueva Instancia de WhatsApp</h3>
+            </div>
+            
+            <form id="createInstanceForm" class="p-6">
+                <div class="mb-4">
+                    <label for="numberName" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre descriptivo del número
+                    </label>
+                    <input type="text" id="numberName" name="numberName" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Ej: Atención al Cliente, Ventas, etc.">
+                    <p class="text-xs text-gray-500 mt-1">Este nombre te ayudará a identificar el número en el sistema</p>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('createInstanceModal').classList.add('hidden')" 
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Cancelar
+                    </button>
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                        Crear Instancia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Test Message Modal -->
+<div id="testMessageModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center h-full p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Enviar Mensaje de Prueba</h3>
+            </div>
+            
+            <form id="testMessageForm" class="p-6">
+                <input type="hidden" id="testInstanceId" name="instanceId">
+                
+                <div class="mb-4">
+                    <label for="testPhoneNumber" class="block text-sm font-medium text-gray-700 mb-2">
+                        Número de destino
+                    </label>
+                    <input type="text" id="testPhoneNumber" name="to" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Ej: 5491123456789">
+                    <p class="text-xs text-gray-500 mt-1">Incluye código de país sin el símbolo +</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="testMessage" class="block text-sm font-medium text-gray-700 mb-2">
+                        Mensaje
+                    </label>
+                    <textarea id="testMessage" name="message" rows="3" required
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Escribe tu mensaje de prueba..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeTestMessageModal()" 
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Cancelar
+                    </button>
+                    <button type="submit" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fab fa-whatsapp mr-2"></i>
+                        Enviar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript cargado desde /js/test-qr.js -->

@@ -1,0 +1,503 @@
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                    <a href="/admin" class="hover:text-gray-700">Administración</a>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-gray-900">Números WhatsApp</span>
+                </nav>
+                <h1 class="text-2xl font-bold text-gray-900">Gestión de Números WhatsApp</h1>
+                <p class="text-gray-600 mt-1">Administrar todas las instancias de WhatsApp del sistema</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-600">
+                    Total: <span class="font-semibold"><%= instances.length %></span> instancia(s)
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <i class="fas fa-mobile-alt text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= instances.length %></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Conectadas</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= instances.filter(i => i.status === 'connected').length %></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Esperando QR</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= instances.filter(i => i.status === 'qr_pending').length %></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-red-100 rounded-lg">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Con Error</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= instances.filter(i => i.status === 'error').length %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Instances Table -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">Todas las Instancias</h2>
+                <div class="flex items-center space-x-4">
+                    <select id="statusFilter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="">Todos los estados</option>
+                        <option value="connected">Conectadas</option>
+                        <option value="disconnected">Desconectadas</option>
+                        <option value="qr_pending">Esperando QR</option>
+                        <option value="error">Con Error</option>
+                    </select>
+                    <div class="relative">
+                        <input type="text" id="searchInstances" placeholder="Buscar instancias..." 
+                               class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instancia</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Conexión</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="instancesTableBody">
+                    <% instances.forEach(function(instance) { %>
+                        <tr class="hover:bg-gray-50 instance-row" 
+                            data-instance-name="<%= instance.numberName.toLowerCase() %>" 
+                            data-instance-status="<%= instance.status %>"
+                            data-user-name="<%= instance.user ? instance.user.displayName.toLowerCase() : '' %>">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-blue-100 rounded-lg">
+                                        <i class="fas fa-mobile-alt text-blue-600"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900"><%= instance.numberName %></div>
+                                        <div class="text-sm text-gray-500">ID: <%= instance.id %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <% if (instance.user) { %>
+                                    <div class="flex items-center">
+                                        <img src="<%= instance.user.avatar || '/images/default-avatar.png' %>" 
+                                             alt="Avatar" class="w-8 h-8 rounded-full">
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900"><%= instance.user.displayName %></div>
+                                            <div class="text-sm text-gray-500"><%= instance.user.email %></div>
+                                        </div>
+                                    </div>
+                                <% } else { %>
+                                    <span class="text-sm text-gray-400">Sin asignar</span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <% if (instance.status === 'connected') { %>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-circle text-green-400 mr-1" style="font-size: 6px;"></i>
+                                        Conectado
+                                    </span>
+                                <% } else if (instance.status === 'qr_pending') { %>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        <i class="fas fa-circle text-yellow-400 mr-1" style="font-size: 6px;"></i>
+                                        Esperando QR
+                                    </span>
+                                <% } else if (instance.status === 'connecting') { %>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i class="fas fa-circle text-blue-400 mr-1" style="font-size: 6px;"></i>
+                                        Conectando
+                                    </span>
+                                <% } else if (instance.status === 'error') { %>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <i class="fas fa-circle text-red-400 mr-1" style="font-size: 6px;"></i>
+                                        Error
+                                    </span>
+                                <% } else { %>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-circle text-gray-400 mr-1" style="font-size: 6px;"></i>
+                                        Desconectado
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <% if (instance.phoneNumber) { %>
+                                    <span class="font-mono">+<%= instance.phoneNumber %></span>
+                                <% } else { %>
+                                    <span class="text-gray-400">No disponible</span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <% if (instance.lastConnection) { %>
+                                    <%= new Date(instance.lastConnection).toLocaleString('es-ES') %>
+                                <% } else { %>
+                                    <span class="text-gray-400">Nunca</span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex items-center space-x-2">
+                                    <!-- Assign to User -->
+                                    <button onclick="assignToUser(<%= instance.id %>, '<%= instance.numberName %>')" 
+                                            class="text-blue-600 hover:text-blue-900" title="Asignar a usuario">
+                                        <i class="fas fa-user-plus"></i>
+                                    </button>
+                                    
+                                    <!-- View Details -->
+                                    <button onclick="viewInstanceDetails(<%= JSON.stringify(instance) %>)" 
+                                            class="text-green-600 hover:text-green-900" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    
+                                    <!-- Connect/Disconnect -->
+                                    <% if (instance.status === 'disconnected' || instance.status === 'error') { %>
+                                        <button onclick="connectInstance(<%= instance.id %>)" 
+                                                class="text-green-600 hover:text-green-900" title="Conectar">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                    <% } else if (instance.status === 'connected') { %>
+                                        <button onclick="disconnectInstance(<%= instance.id %>)" 
+                                                class="text-red-600 hover:text-red-900" title="Desconectar">
+                                            <i class="fas fa-stop"></i>
+                                        </button>
+                                    <% } %>
+                                    
+                                    <!-- Delete Instance -->
+                                    <button onclick="deleteInstance(<%= instance.id %>, '<%= instance.numberName %>')" 
+                                            class="text-red-600 hover:text-red-900" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            
+            <% if (instances.length === 0) { %>
+                <div class="text-center py-12">
+                    <div class="text-gray-400 text-6xl mb-4">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No hay instancias registradas</h3>
+                    <p class="text-gray-600">Los usuarios pueden crear instancias desde su dashboard.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Assign to User Modal -->
+<div id="assignUserModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center h-full p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Asignar Instancia a Usuario</h3>
+            </div>
+            
+            <div class="p-6">
+                <input type="hidden" id="assignInstanceId">
+                <p class="text-gray-600 mb-4">
+                    Selecciona el usuario al que quieres asignar la instancia <span id="assignInstanceName" class="font-semibold"></span>:
+                </p>
+                
+                <div class="space-y-2 max-h-60 overflow-y-auto">
+                    <% users.forEach(function(user) { %>
+                        <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="assignUserId" value="<%= user.id %>" class="mr-3">
+                            <img src="<%= user.avatar || '/images/default-avatar.png' %>" 
+                                 alt="Avatar" class="w-8 h-8 rounded-full mr-3">
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900"><%= user.displayName %></div>
+                                <div class="text-sm text-gray-500"><%= user.email %></div>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded <%= user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800' %>">
+                                <%= user.role %>
+                            </span>
+                        </label>
+                    <% }) %>
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
+                <button onclick="closeAssignUserModal()" 
+                        class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                    Cancelar
+                </button>
+                <button onclick="confirmAssignUser()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                    Asignar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instance Details Modal -->
+<div id="instanceDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center h-full p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Detalles de la Instancia</h3>
+            </div>
+            
+            <div class="p-6" id="instanceDetailsContent">
+                <!-- Content will be filled by JavaScript -->
+            </div>
+            
+            <div class="p-6 border-t border-gray-200 flex justify-end">
+                <button onclick="closeInstanceDetailsModal()" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search functionality
+    document.getElementById('searchInstances').addEventListener('input', filterInstances);
+    document.getElementById('statusFilter').addEventListener('change', filterInstances);
+    
+    function filterInstances() {
+        const searchTerm = document.getElementById('searchInstances').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        const instanceRows = document.querySelectorAll('.instance-row');
+        
+        instanceRows.forEach(row => {
+            const name = row.getAttribute('data-instance-name');
+            const status = row.getAttribute('data-instance-status');
+            const userName = row.getAttribute('data-user-name');
+            
+            const matchesSearch = name.includes(searchTerm) || userName.includes(searchTerm);
+            const matchesStatus = !statusFilter || status === statusFilter;
+            
+            if (matchesSearch && matchesStatus) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    // Assign to user functions
+    function assignToUser(instanceId, instanceName) {
+        document.getElementById('assignInstanceId').value = instanceId;
+        document.getElementById('assignInstanceName').textContent = instanceName;
+        document.getElementById('assignUserModal').classList.remove('hidden');
+    }
+    
+    function closeAssignUserModal() {
+        document.getElementById('assignUserModal').classList.add('hidden');
+        document.querySelectorAll('input[name="assignUserId"]').forEach(input => input.checked = false);
+    }
+    
+    async function confirmAssignUser() {
+        const instanceId = document.getElementById('assignInstanceId').value;
+        const userId = document.querySelector('input[name="assignUserId"]:checked')?.value;
+        
+        if (!userId) {
+            showToast('Por favor selecciona un usuario', 'warning');
+            return;
+        }
+        
+        try {
+            const result = await apiCall(`/admin/numbers/${instanceId}/assign`, {
+                method: 'POST',
+                body: JSON.stringify({ userId: parseInt(userId) })
+            });
+            
+            showToast(result.message, 'success');
+            closeAssignUserModal();
+            setTimeout(() => location.reload(), 1000);
+            
+        } catch (error) {
+            console.error('Error assigning instance:', error);
+        }
+    }
+    
+    // Instance details
+    function viewInstanceDetails(instance) {
+        const content = document.getElementById('instanceDetailsContent');
+        
+        content.innerHTML = `
+            <div class="space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Información General</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Nombre</p>
+                                <p class="text-sm text-gray-900">${instance.numberName}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">ID</p>
+                                <p class="text-sm text-gray-900">${instance.id}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Estado</p>
+                                <p class="text-sm text-gray-900">${instance.status}</p>
+                            </div>
+                            ${instance.phoneNumber ? `
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Número</p>
+                                    <p class="text-sm text-gray-900">+${instance.phoneNumber}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Usuario Asignado</h4>
+                        ${instance.user ? `
+                            <div class="flex items-center">
+                                <img src="${instance.user.avatar || '/images/default-avatar.png'}" 
+                                     alt="Avatar" class="w-12 h-12 rounded-full">
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">${instance.user.displayName}</p>
+                                    <p class="text-sm text-gray-500">${instance.user.email}</p>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                        instance.user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                                    }">
+                                        ${instance.user.role}
+                                    </span>
+                                </div>
+                            </div>
+                        ` : `
+                            <p class="text-sm text-gray-500">Sin usuario asignado</p>
+                        `}
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Fechas</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Creada</p>
+                            <p class="text-sm text-gray-900">${new Date(instance.createdAt).toLocaleString('es-ES')}</p>
+                        </div>
+                        ${instance.lastConnection ? `
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Última conexión</p>
+                                <p class="text-sm text-gray-900">${new Date(instance.lastConnection).toLocaleString('es-ES')}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                ${instance.errorMessage ? `
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Error</h4>
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="text-sm text-red-700">${instance.errorMessage}</p>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        document.getElementById('instanceDetailsModal').classList.remove('hidden');
+    }
+    
+    function closeInstanceDetailsModal() {
+        document.getElementById('instanceDetailsModal').classList.add('hidden');
+    }
+    
+    // Instance actions
+    async function connectInstance(instanceId) {
+        try {
+            const result = await apiCall(`/api/bot/instances/${instanceId}/connect`, {
+                method: 'POST'
+            });
+            
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 2000);
+            
+        } catch (error) {
+            console.error('Error connecting instance:', error);
+        }
+    }
+    
+    async function disconnectInstance(instanceId) {
+        if (!confirm('¿Estás seguro de que quieres desconectar esta instancia?')) {
+            return;
+        }
+        
+        try {
+            const result = await apiCall(`/api/bot/instances/${instanceId}/disconnect`, {
+                method: 'POST'
+            });
+            
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+            
+        } catch (error) {
+            console.error('Error disconnecting instance:', error);
+        }
+    }
+    
+    async function deleteInstance(instanceId, instanceName) {
+        if (!confirm(`¿Estás seguro de que quieres eliminar la instancia "${instanceName}"?`)) {
+            return;
+        }
+        
+        showToast('Función de eliminación no implementada aún', 'warning');
+        // TODO: Implement delete instance functionality
+    }
+    
+    // Close modals when clicking outside
+    document.getElementById('assignUserModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeAssignUserModal();
+        }
+    });
+    
+    document.getElementById('instanceDetailsModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeInstanceDetailsModal();
+        }
+    });
+</script>

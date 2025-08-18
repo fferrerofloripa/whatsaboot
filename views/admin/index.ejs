@@ -1,0 +1,322 @@
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Panel de Administración</h1>
+                <p class="text-gray-600 mt-1">Gestión general del sistema WhatsaBoot</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                    <i class="fas fa-crown mr-2"></i>
+                    Administrador
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <i class="fas fa-users text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Usuarios</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= stats.totalUsers %></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <i class="fas fa-mobile-alt text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Instancias Totales</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= stats.totalInstances %></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-check-circle text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Conectadas</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= stats.connectedInstances %></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <i class="fas fa-robot text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Respuestas Auto</p>
+                    <p class="text-2xl font-semibold text-gray-900"><%= stats.totalAutoResponses %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Acciones Rápidas</h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a href="/admin/users" class="group bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg p-6 text-white transition-all duration-200 transform hover:scale-105">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                            <i class="fas fa-users text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold">Gestionar Usuarios</h3>
+                            <p class="text-blue-100 text-sm">Administrar roles y permisos</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center text-sm">
+                        <span>Ver todos los usuarios</span>
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </a>
+                
+                <a href="/admin/numbers" class="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-lg p-6 text-white transition-all duration-200 transform hover:scale-105">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                            <i class="fas fa-phone text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold">Gestionar Números</h3>
+                            <p class="text-green-100 text-sm">WhatsApp instances</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center text-sm">
+                        <span>Ver todas las instancias</span>
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </a>
+                
+                <button onclick="showSystemInfo()" class="group bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-lg p-6 text-white transition-all duration-200 transform hover:scale-105 text-left w-full">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                            <i class="fas fa-server text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold">Info del Sistema</h3>
+                            <p class="text-purple-100 text-sm">Estado y configuración</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center text-sm">
+                        <span>Ver información técnica</span>
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Actividad Reciente</h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="space-y-4">
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i class="fas fa-user-plus text-green-600"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-900">Sistema inicializado</p>
+                        <p class="text-xs text-gray-500">Panel de administración configurado correctamente</p>
+                    </div>
+                    <span class="text-xs text-gray-400">Hoy</span>
+                </div>
+                
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i class="fas fa-database text-blue-600"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-900">Base de datos sincronizada</p>
+                        <p class="text-xs text-gray-500">Modelos de usuario, instancias y respuestas automáticas creados</p>
+                    </div>
+                    <span class="text-xs text-gray-400">Hoy</span>
+                </div>
+                
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <i class="fas fa-cog text-purple-600"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-900">Configuración OAuth completada</p>
+                        <p class="text-xs text-gray-500">Autenticación con Google configurada correctamente</p>
+                    </div>
+                    <span class="text-xs text-gray-400">Hoy</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Health -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Estado del Sistema</h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="p-4 bg-green-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                        <i class="fas fa-database text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-medium text-gray-900">Base de Datos</h3>
+                    <p class="text-sm text-green-600 font-medium">Conectada</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="p-4 bg-green-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-medium text-gray-900">Autenticación</h3>
+                    <p class="text-sm text-green-600 font-medium">Activa</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="p-4 bg-green-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                        <i class="fas fa-bolt text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-medium text-gray-900">Socket.IO</h3>
+                    <p class="text-sm text-green-600 font-medium">Operativo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Info Modal -->
+<div id="systemInfoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center h-full p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Información del Sistema</h3>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-3">Estadísticas Generales</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Usuarios:</span>
+                                <span class="font-medium"><%= stats.totalUsers %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Administradores:</span>
+                                <span class="font-medium"><%= stats.adminUsers %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Instancias:</span>
+                                <span class="font-medium"><%= stats.totalInstances %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Instancias Conectadas:</span>
+                                <span class="font-medium text-green-600"><%= stats.connectedInstances %></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Respuestas Automáticas:</span>
+                                <span class="font-medium"><%= stats.totalAutoResponses %></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-3">Estado de Servicios</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Base de Datos:</span>
+                                <span class="flex items-center text-green-600 font-medium">
+                                    <i class="fas fa-circle text-xs mr-1"></i>
+                                    Conectada
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Google OAuth:</span>
+                                <span class="flex items-center text-green-600 font-medium">
+                                    <i class="fas fa-circle text-xs mr-1"></i>
+                                    Configurado
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Socket.IO:</span>
+                                <span class="flex items-center text-green-600 font-medium">
+                                    <i class="fas fa-circle text-xs mr-1"></i>
+                                    Activo
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">WhatsApp Service:</span>
+                                <span class="flex items-center text-green-600 font-medium">
+                                    <i class="fas fa-circle text-xs mr-1"></i>
+                                    Operativo
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="font-medium text-gray-900 mb-3">Información Técnica</h4>
+                    <div class="bg-gray-50 rounded-lg p-4 text-sm font-mono">
+                        <div>Versión: WhatsaBoot v1.0.0</div>
+                        <div>Node.js: <%= process.version || 'N/A' %></div>
+                        <div>Ambiente: <%= process.env.NODE_ENV || 'development' %></div>
+                        <div>Puerto: <%= process.env.PORT || '3000' %></div>
+                        <div>Iniciado: <%= new Date().toLocaleString('es-ES') %></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-gray-200 flex justify-end">
+                <button onclick="closeSystemInfoModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showSystemInfo() {
+        document.getElementById('systemInfoModal').classList.remove('hidden');
+    }
+    
+    function closeSystemInfoModal() {
+        document.getElementById('systemInfoModal').classList.add('hidden');
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('systemInfoModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeSystemInfoModal();
+        }
+    });
+    
+    // Auto refresh stats every 30 seconds
+    setInterval(() => {
+        // This could be implemented to refresh stats in real-time
+        // For now we'll just update the connection status
+        console.log('Actualizando estadísticas...');
+    }, 30000);
+</script>

@@ -1,0 +1,65 @@
+{
+  "name": "whatsaboot",
+  "version": "1.0.0",
+  "description": "WhatsApp Bot Management System with Admin Panel",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "setup": "node scripts/setup.js",
+    "health-check": "node scripts/health-check.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "automation",
+    "nodejs",
+    "express",
+    "oauth",
+    "admin-panel",
+    "chatbot",
+    "whatsapp-web",
+    "socket.io"
+  ],
+  "author": {
+    "name": "WhatsaBoot Team",
+    "email": "contact@whatsaboot.com",
+    "url": "https://github.com/tu-usuario/whatsaboot"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tu-usuario/whatsaboot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tu-usuario/whatsaboot/issues"
+  },
+  "homepage": "https://github.com/tu-usuario/whatsaboot#readme",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.17.3",
+    "method-override": "^3.0.0",
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
+    "qrcode": "^1.5.3",
+    "sequelize": "^6.33.0",
+    "socket.io": "^4.7.2",
+    "sqlite3": "^5.1.6",
+    "whatsapp-web.js": "^1.22.2",
+    "winston": "^3.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

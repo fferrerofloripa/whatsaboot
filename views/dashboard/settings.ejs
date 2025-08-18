@@ -1,0 +1,312 @@
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                    <a href="/dashboard" class="hover:text-gray-700">Dashboard</a>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-gray-900">Configuración</span>
+                </nav>
+                <h1 class="text-2xl font-bold text-gray-900">Configuración</h1>
+                <p class="text-gray-600 mt-1">Gestiona tu perfil y preferencias de la aplicación</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Profile -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Perfil de Usuario</h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="flex items-center space-x-6">
+                <img src="<%= user.avatar || '/images/default-avatar.svg' %>" 
+                     alt="Avatar" class="w-20 h-20 rounded-full">
+                <div class="flex-1">
+                    <h3 class="text-lg font-medium text-gray-900"><%= user.displayName %></h3>
+                    <p class="text-gray-600"><%= user.email %></p>
+                    <div class="mt-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                               <%= user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800' %>">
+                            <% if (user.role === 'admin') { %>
+                                <i class="fas fa-crown mr-2"></i>
+                                Administrador
+                            <% } else { %>
+                                <i class="fas fa-user mr-2"></i>
+                                Usuario
+                            <% } %>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Información de la Cuenta</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Miembro desde:</span>
+                            <span class="font-medium"><%= new Date(user.createdAt).toLocaleDateString('es-ES') %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Último acceso:</span>
+                            <span class="font-medium">
+                                <% if (user.lastLogin) { %>
+                                    <%= new Date(user.lastLogin).toLocaleString('es-ES') %>
+                                <% } else { %>
+                                    Primer acceso
+                                <% } %>
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Estado:</span>
+                            <span class="font-medium text-green-600">Activo</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Estadísticas</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Instancias creadas:</span>
+                            <span class="font-medium"><%= instances.length %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Instancias activas:</span>
+                            <span class="font-medium"><%= instances.filter(i => i.status === 'connected').length %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total respuestas:</span>
+                            <span class="font-medium">
+                                <% 
+                                let totalResponses = 0;
+                                instances.forEach(instance => {
+                                    if (instance.autoResponses) {
+                                        totalResponses += instance.autoResponses.length;
+                                    }
+                                });
+                                %>
+                                <%= totalResponses %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Instances -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Mis Instancias</h2>
+        </div>
+        
+        <div class="p-6">
+            <% if (instances && instances.length > 0) { %>
+                <div class="space-y-4">
+                    <% instances.forEach(function(instance) { %>
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200">
+                            <div class="flex items-center space-x-4">
+                                <div class="p-3 bg-blue-100 rounded-lg">
+                                    <i class="fas fa-mobile-alt text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-gray-900"><%= instance.numberName %></h3>
+                                    <% if (instance.phoneNumber) { %>
+                                        <p class="text-sm text-gray-600">+<%= instance.phoneNumber %></p>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <% if (instance.status === 'connected') { %>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-circle text-green-400 mr-1" style="font-size: 6px;"></i>
+                                        Conectado
+                                    </span>
+                                <% } else { %>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-circle text-gray-400 mr-1" style="font-size: 6px;"></i>
+                                        <%= instance.status %>
+                                    </span>
+                                <% } %>
+                                <a href="/dashboard/instance/<%= instance.id %>" 
+                                   class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-cog"></i>
+                                </a>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-8">
+                    <div class="text-gray-400 text-4xl mb-4">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No tienes instancias</h3>
+                    <p class="text-gray-600 mb-4">Crea tu primera instancia para comenzar.</p>
+                    <a href="/dashboard" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                        Ir al Dashboard
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    
+    <!-- Application Settings -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Configuración de la Aplicación</h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="space-y-6">
+                <!-- Notifications -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Notificaciones</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" checked 
+                                   class="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700">Notificaciones de conexión/desconexión</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" checked 
+                                   class="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700">Notificaciones de nuevos mensajes</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   class="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700">Notificaciones por email</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Interface -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Interfaz</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Tema</label>
+                            <select class="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="light" selected>Claro</option>
+                                <option value="dark">Oscuro</option>
+                                <option value="auto">Automático</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Idioma</label>
+                            <select class="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="es" selected>Español</option>
+                                <option value="en">English</option>
+                                <option value="pt">Português</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Privacy -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Privacidad</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" checked 
+                                   class="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700">Permitir analytics para mejorar la aplicación</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   class="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700">Compartir datos de uso para desarrollo</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+                    <button onclick="saveSettings()" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                        Guardar Configuración
+                    </button>
+                    
+                    <div class="text-center md:text-right">
+                        <p class="text-sm text-gray-500 mb-2">¿Necesitas ayuda?</p>
+                        <a href="/help" class="text-blue-600 hover:text-blue-900 text-sm">
+                            Ver documentación
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Danger Zone -->
+    <div class="bg-white rounded-lg shadow-sm border border-red-200">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-red-900">Zona de Peligro</h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="space-y-4">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900">Limpiar todas las sesiones de WhatsApp</h3>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Esto desconectará todas tus instancias y requerirá escanear nuevos códigos QR.
+                        </p>
+                    </div>
+                    <button onclick="clearAllSessions()" 
+                            class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm">
+                        Limpiar Sesiones
+                    </button>
+                </div>
+                
+                <div class="flex items-start justify-between pt-4 border-t border-gray-200">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900">Eliminar todas mis instancias</h3>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Esto eliminará permanentemente todas tus instancias y respuestas automáticas.
+                        </p>
+                    </div>
+                    <button onclick="deleteAllInstances()" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                        Eliminar Todo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function saveSettings() {
+        showToast('Configuración guardada exitosamente', 'success');
+    }
+    
+    function clearAllSessions() {
+        if (!confirm('¿Estás seguro de que quieres limpiar todas las sesiones de WhatsApp? Tendrás que escanear nuevos códigos QR.')) {
+            return;
+        }
+        
+        showToast('Función no implementada aún', 'warning');
+        // TODO: Implement clear all sessions
+    }
+    
+    function deleteAllInstances() {
+        if (!confirm('¿Estás seguro de que quieres eliminar TODAS tus instancias? Esta acción no se puede deshacer.')) {
+            return;
+        }
+        
+        const confirmation = prompt('Escribe "ELIMINAR" para confirmar:');
+        if (confirmation !== 'ELIMINAR') {
+            return;
+        }
+        
+        showToast('Función no implementada aún', 'warning');
+        // TODO: Implement delete all instances
+    }
+</script>
