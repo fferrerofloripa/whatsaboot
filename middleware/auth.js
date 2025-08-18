@@ -61,7 +61,16 @@ function isAdmin(req, res, next) {
 function canAccessInstance(req, res, next) {
     const instanceId = req.params.instanceId || req.body.instanceId;
     
+    console.log('🔍 canAccessInstance middleware called:', {
+        instanceId,
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        method: req.method,
+        url: req.url
+    });
+    
     if (!instanceId) {
+        console.log('❌ No instanceId provided');
         return res.status(400).json({
             success: false,
             message: 'ID de instancia requerido'
@@ -73,7 +82,15 @@ function canAccessInstance(req, res, next) {
     
     WhatsappInstance.findByPk(instanceId)
         .then(instance => {
+            console.log('📋 Instance lookup result:', {
+                found: !!instance,
+                instanceId,
+                instanceUserId: instance?.userId,
+                currentUserId: req.user?.id
+            });
+            
             if (!instance) {
+                console.log('❌ Instance not found');
                 return res.status(404).json({
                     success: false,
                     message: 'Instancia no encontrada'
@@ -82,12 +99,14 @@ function canAccessInstance(req, res, next) {
 
             // Los administradores pueden acceder a cualquier instancia
             if (req.user.role === 'admin') {
+                console.log('👑 Admin access granted');
                 req.whatsappInstance = instance;
                 return next();
             }
 
             // Los usuarios normales solo pueden acceder a sus propias instancias
             if (instance.userId !== req.user.id) {
+                console.log('❌ Access denied - user does not own instance');
                 logger.warn(`Usuario ${req.user.email} intentó acceder a instancia ${instanceId} sin permisos`);
                 return res.status(403).json({
                     success: false,
@@ -95,6 +114,7 @@ function canAccessInstance(req, res, next) {
                 });
             }
 
+            console.log('✅ User access granted');
             req.whatsappInstance = instance;
             next();
         })
