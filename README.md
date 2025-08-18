@@ -41,6 +41,161 @@ WhatsaBoot es una aplicación web completa para gestionar múltiples instancias 
 - **Real-time:** Socket.IO
 - **Logging:** Winston
 
+## 🏗️ Diagramas de Arquitectura
+
+### 📊 Arquitectura del Sistema
+
+```mermaid
+graph TB
+    subgraph "🌐 Frontend Layer"
+        A[👤 Browser Client] --> B[📄 EJS Templates]
+        B --> C[🎨 Tailwind CSS]
+        A --> D[⚡ Socket.IO Client]
+        A --> E[📱 JavaScript Functions]
+    end
+    
+    subgraph "⚙️ Backend Layer"
+        F[🚀 Express.js Server] --> G[🛤️ Routes Layer]
+        F --> H[🛡️ Middleware Layer]
+        F --> I[🔄 Socket.IO Server]
+        
+        G --> J[🔐 Auth Routes]
+        G --> K[📊 Dashboard Routes]
+        G --> L[👑 Admin Routes]
+        G --> M[🤖 Bot API Routes]
+        G --> N[📋 Logs Routes]
+        
+        H --> O[🔑 Authentication]
+        H --> P[🛡️ Authorization]
+        H --> Q[💾 Session Management]
+    end
+    
+    subgraph "🔧 Services Layer"
+        R[📱 WhatsApp Service] --> S[💬 whatsapp-web.js]
+        T[🤖 AI Service] --> U[🧠 DeepSeek API]
+        V[📝 Logger Service] --> W[📋 Winston]
+    end
+    
+    subgraph "🗄️ Data Layer"
+        X[🔗 Sequelize ORM] --> Y[💾 SQLite Database]
+        Y --> Z[👤 User Model]
+        Y --> AA[📱 WhatsApp Instance Model]
+        Y --> BB[🤖 Auto Response Model]
+    end
+    
+    subgraph "🔐 Authentication"
+        CC[🎫 Passport.js] --> DD[🔵 Google OAuth 2.0]
+        CC --> EE[💾 Session Store]
+    end
+    
+    F --> R
+    F --> T
+    F --> V
+    F --> X
+    F --> CC
+    
+    style A fill:#e3f2fd
+    style F fill:#f3e5f5
+    style R fill:#e8f5e8
+    style X fill:#fff3e0
+    style CC fill:#fce4ec
+```
+
+### 🔄 Flujo de Datos Principal
+
+```mermaid
+flowchart TD
+    Start([👤 Usuario Inicia Sesión]) --> Auth{🔐 Google OAuth}
+    Auth -->|✅ Exitoso| Dashboard[📊 Dashboard Principal]
+    Auth -->|❌ Fallo| Login[🔑 Página de Login]
+    Login --> Auth
+    
+    Dashboard --> CreateInstance[📱 Crear Instancia WhatsApp]
+    CreateInstance --> QRGen[📲 Generar QR Code]
+    QRGen --> SocketEmit[⚡ Emitir QR via Socket.IO]
+    SocketEmit --> DisplayQR[📱 Mostrar QR en Frontend]
+    
+    DisplayQR --> ScanQR{📷 Usuario Escanea QR?}
+    ScanQR -->|✅ Sí| Connected[🟢 WhatsApp Conectado]
+    ScanQR -->|❌ No| NewQR[🔄 Generar Nuevo QR]
+    NewQR --> DisplayQR
+    
+    Connected --> ReceiveMsg[📨 Recibir Mensaje]
+    ReceiveMsg --> CheckAuto{🤖 Hay Respuesta Automática?}
+    CheckAuto -->|✅ Sí| SendAuto[📤 Enviar Respuesta Automática]
+    CheckAuto -->|❌ No| CheckAI{🧠 Activar IA?}
+    
+    CheckAI -->|✅ Sí| SendAI[🤖 Respuesta con IA]
+    CheckAI -->|❌ No| NoResponse[⏸️ No Responder]
+    
+    SendAuto --> LogAction[📋 Log de Acción]
+    SendAI --> LogAction
+    LogAction --> End([🏁 Fin del Flujo])
+    
+    Dashboard --> ManageResponses[⚙️ Gestionar Respuestas]
+    ManageResponses --> UpdateDB[💾 Actualizar Base de Datos]
+    UpdateDB --> RefreshUI[🔄 Actualizar UI]
+    
+    style Start fill:#e8f5e8
+    style Auth fill:#fff3e0
+    style Dashboard fill:#e3f2fd
+    style Connected fill:#c8e6c9
+    style SendAuto fill:#bbdefb
+    style SendAI fill:#f8bbd9
+    style LogAction fill:#d7ccc8
+```
+
+### 🗄️ Modelo de Base de Datos
+
+```mermaid
+erDiagram
+    USERS {
+        int id PK "🔑 Primary Key"
+        string googleId "🔵 Google ID único"
+        string email "📧 Email del usuario"
+        string displayName "👤 Nombre mostrado"
+        enum role "👑 admin/user"
+        datetime createdAt "📅 Fecha creación"
+        datetime updatedAt "🔄 Última actualización"
+    }
+    
+    WHATSAPP_INSTANCES {
+        int id PK "🔑 Primary Key"
+        string numberName "📱 Nombre del número"
+        enum status "🔄 connected/disconnected/qr_pending"
+        text qrCode "📲 Código QR actual"
+        string phoneNumber "📞 Número de teléfono"
+        text sessionData "💾 Datos de sesión WhatsApp"
+        boolean isActive "✅ Activo/Inactivo"
+        text errorMessage "❌ Mensajes de error"
+        json settings "⚙️ Configuraciones JSON"
+        datetime lastConnection "🕐 Última conexión"
+        int userId FK "🔗 Foreign Key a Users"
+        datetime createdAt "📅 Fecha creación"
+        datetime updatedAt "🔄 Última actualización"
+    }
+    
+    AUTO_RESPONSES {
+        int id PK "🔑 Primary Key"
+        string keyword "🔍 Palabra clave trigger"
+        text responseMessage "💬 Mensaje de respuesta"
+        boolean isActive "✅ Activo/Inactivo"
+        enum matchType "🎯 exact/contains/starts/ends"
+        boolean caseSensitive "📝 Sensible a mayúsculas"
+        int priority "📊 Prioridad (1=alta)"
+        int usageCount "📈 Contador de uso"
+        datetime lastUsed "🕐 Última vez usado"
+        int whatsappInstanceId FK "🔗 Foreign Key a WhatsApp Instances"
+        datetime createdAt "📅 Fecha creación"
+        datetime updatedAt "🔄 Última actualización"
+    }
+    
+    USERS ||--o{ WHATSAPP_INSTANCES : "👤 Un usuario puede tener múltiples instancias"
+    WHATSAPP_INSTANCES ||--o{ AUTO_RESPONSES : "📱 Una instancia puede tener múltiples respuestas"
+```
+
+> 📊 **Para ver más diagramas detallados de arquitectura, consulta [DIAGRAMS.md](./DIAGRAMS.md)**
+
 ## 🚀 Instalación Rápida
 
 ### Prerrequisitos
@@ -128,7 +283,7 @@ npm run health-check
 3. **Logs del Sistema:** `/admin/logs` - Monitoreo en tiempo real
 4. **Estadísticas:** Dashboard con métricas del sistema
 
-## 🏗️ Arquitectura
+## 📁 Estructura del Proyecto
 
 ```
 WhatsaBoot/
