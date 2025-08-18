@@ -257,12 +257,12 @@ function disconnectInstance(instanceId) {
                 button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Desconectando...';
             }
             
-            // Use fetch with timeout
+            // Use fetch with shorter timeout and optimistic updates
             Promise.race([
                 apiCall(`/api/bot/instances/${instanceId}/disconnect`, {
                     method: 'POST'
                 }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
             ])
             .then(data => {
                 console.log('✅ Instance disconnected:', data);
@@ -281,13 +281,29 @@ function disconnectInstance(instanceId) {
             })
             .catch(error => {
                 console.error('❌ Error disconnecting instance:', error);
-                const errorMsg = error.message === 'Timeout' ? 'La operación tardó demasiado' : error.message;
-                showToast(`Error al desconectar: ${errorMsg}`, 'error');
                 
-                // Restore button
-                if (button) {
-                    button.innerHTML = originalText;
-                    button.disabled = false;
+                if (error.message === 'Timeout') {
+                    // Handle timeout optimistically - the disconnect is probably happening
+                    showToast('Desconexión en proceso... Actualizando estado', 'warning');
+                    
+                    // Update UI optimistically
+                    if (button) {
+                        button.innerHTML = '<i class="fas fa-hourglass mr-1"></i>Desconectando...';
+                        button.disabled = true;
+                    }
+                    
+                    // Check status after a delay
+                    setTimeout(() => {
+                        refreshInstanceStatus(instanceId);
+                    }, 3000);
+                    
+                } else {
+                    // Real error - restore button
+                    showToast(`Error al desconectar: ${error.message}`, 'error');
+                    if (button) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
                 }
             });
         } else {
