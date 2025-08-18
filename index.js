@@ -148,8 +148,10 @@ async function startApp() {
             logger.info('No se encontró usuario admin. El primer usuario registrado será administrador.');
         }
 
-        // Inicializar instancias activas de WhatsApp
-        await whatsappService.initializeAllActiveInstances();
+        // Inicializar instancias activas de WhatsApp (DESHABILITADO temporalmente)
+        // La inicialización automática está causando que el servidor se cuelgue
+        // Las instancias se pueden crear manualmente desde el dashboard
+        logger.info('Inicialización automática de instancias deshabilitada para evitar cuelgues del servidor');
 
         // Iniciar el servidor
         const PORT = process.env.PORT || 3000;
