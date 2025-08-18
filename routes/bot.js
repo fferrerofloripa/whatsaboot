@@ -105,27 +105,40 @@ router.post('/instances/:instanceId/disconnect', canAccessInstance, async (req, 
 router.get('/instances/:instanceId/status', canAccessInstance, async (req, res) => {
     try {
         const instance = req.whatsappInstance;
-        const isConnected = whatsappService.isConnected(instance.id);
+        
+        // Refresh instance data from database
+        await instance.reload();
+        
+        // Check connection status safely
+        let isConnected = false;
+        try {
+            isConnected = whatsappService.isConnected(instance.id);
+        } catch (statusError) {
+            logger.warn(`Error checking connection for instance ${instance.id}:`, statusError.message);
+            isConnected = false;
+        }
 
         res.json({
             success: true,
             status: {
                 id: instance.id,
                 numberName: instance.numberName,
-                phoneNumber: instance.phoneNumber,
+                phoneNumber: instance.phoneNumber || null,
                 status: instance.status,
                 isConnected,
-                qrCode: instance.qrCode,
-                lastConnection: instance.lastConnection,
-                errorMessage: instance.errorMessage
+                qrCode: instance.qrCode || null,
+                lastConnection: instance.lastConnection || null,
+                errorMessage: instance.errorMessage || null,
+                updatedAt: instance.updatedAt
             }
         });
 
     } catch (error) {
-        logger.error('Error al obtener estado:', error);
+        logger.error(`Error al obtener estado de instancia ${req.params.instanceId}:`, error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener el estado'
+            error: 'Error interno del servidor',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });

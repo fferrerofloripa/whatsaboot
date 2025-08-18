@@ -264,8 +264,13 @@ class WhatsAppService {
      * Verificar si una instancia está conectada
      */
     isConnected(instanceId) {
-        const client = this.clients.get(instanceId);
-        return client && client.info;
+        try {
+            const client = this.clients.get(instanceId);
+            return client && client.info && client.info.wid;
+        } catch (error) {
+            logger.warn(`Error checking connection status for instance ${instanceId}:`, error.message);
+            return false;
+        }
     }
 
     /**
