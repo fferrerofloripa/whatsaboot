@@ -273,16 +273,34 @@ class WhatsAppService {
      */
     async disconnectInstance(instanceId) {
         try {
-            const client = this.clients.get(instanceId);
-            if (client) {
-                await client.destroy();
-                this.clients.delete(instanceId);
-                logger.info(`Instancia ${instanceId} desconectada`);
-            }
-
+            logger.info(`Iniciando desconexión de instancia ${instanceId}`);
+            
+            // Update status first for immediate feedback
             const instance = await WhatsappInstance.findByPk(instanceId);
             if (instance) {
                 await instance.updateStatus('disconnected');
+                logger.info(`Estado de instancia ${instanceId} actualizado a desconectado`);
+            }
+
+            // Handle client destruction asynchronously to avoid blocking
+            const client = this.clients.get(instanceId);
+            if (client) {
+                // Remove from clients map immediately
+                this.clients.delete(instanceId);
+                
+                // Destroy client in background with timeout
+                Promise.race([
+                    client.destroy(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Client destroy timeout')), 5000))
+                ])
+                .then(() => {
+                    logger.info(`Cliente de instancia ${instanceId} destruido exitosamente`);
+                })
+                .catch(error => {
+                    logger.warn(`Error al destruir cliente ${instanceId} (no crítico):`, error.message);
+                });
+                
+                logger.info(`Instancia ${instanceId} desconectada (cliente removido del mapa)`);
             }
 
         } catch (error) {

@@ -34,22 +34,39 @@ try {
     console.error('❌ Error inicializando Socket.IO:', error);
 }
 
-// Helper function for API calls
+// Helper function for API calls with optimized performance
 function apiCall(url, options = {}) {
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
             ...options.headers
-        }
+        },
+        // Add timeout to prevent hanging requests
+        signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined
     };
     
-    return fetch(url, { ...defaultOptions, ...options })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    return fetch(url, { 
+        ...defaultOptions, 
+        ...options,
+        signal: controller.signal
+    })
+    .then(response => {
+        clearTimeout(timeoutId);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .catch(error => {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout');
+        }
+        throw error;
+    });
 }
 
 // Show toast notification
@@ -186,21 +203,32 @@ function connectInstance(instanceId) {
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Conectando...';
         button.disabled = true;
         
-        apiCall(`/api/bot/instances/${instanceId}/connect`, {
-            method: 'POST'
-        })
+        // Use fetch with timeout to avoid long waits
+        Promise.race([
+            apiCall(`/api/bot/instances/${instanceId}/connect`, {
+                method: 'POST'
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+        ])
         .then(data => {
             console.log('✅ Instance connection initiated:', data);
             showToast('Iniciando conexión... Se generará un código QR en breve.', 'success');
             
-            // Update UI immediately
+            // Update button immediately
+            if (button) {
+                button.innerHTML = '<i class="fas fa-qrcode mr-1"></i>Generando QR...';
+                button.className = button.className.replace('bg-green-600', 'bg-yellow-500');
+            }
+            
+            // Reload after delay
             setTimeout(() => {
                 window.location.reload();
-            }, 2000);
+            }, 3000);
         })
         .catch(error => {
             console.error('❌ Error connecting instance:', error);
-            showToast(`Error al conectar: ${error.message}`, 'error');
+            const errorMsg = error.message === 'Timeout' ? 'La conexión tardó demasiado' : error.message;
+            showToast(`Error al conectar: ${errorMsg}`, 'error');
             
             // Restore button
             button.innerHTML = originalText;
@@ -212,37 +240,64 @@ function connectInstance(instanceId) {
 function disconnectInstance(instanceId) {
     console.log('🔌 Disconnecting instance:', instanceId);
     
-    if (!confirm('¿Estás seguro de que quieres desconectar esta instancia?')) {
-        return;
+    // Show immediate feedback
+    const button = document.querySelector(`button[onclick="disconnectInstance(${instanceId})"]`);
+    const originalText = button ? button.innerHTML : '';
+    
+    if (button) {
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Procesando...';
+        button.disabled = true;
     }
     
-    const button = document.querySelector(`button[onclick="disconnectInstance(${instanceId})"]`);
-    if (button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Desconectando...';
-        button.disabled = true;
-        
-        apiCall(`/api/bot/instances/${instanceId}/disconnect`, {
-            method: 'POST'
-        })
-        .then(data => {
-            console.log('✅ Instance disconnected:', data);
-            showToast('Instancia desconectada exitosamente', 'success');
+    // Use setTimeout to avoid blocking the UI
+    setTimeout(() => {
+        if (confirm('¿Estás seguro de que quieres desconectar esta instancia?')) {
             
-            // Update UI immediately
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        })
-        .catch(error => {
-            console.error('❌ Error disconnecting instance:', error);
-            showToast(`Error al desconectar: ${error.message}`, 'error');
+            if (button) {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Desconectando...';
+            }
             
-            // Restore button
-            button.innerHTML = originalText;
-            button.disabled = false;
-        });
-    }
+            // Use fetch with timeout
+            Promise.race([
+                apiCall(`/api/bot/instances/${instanceId}/disconnect`, {
+                    method: 'POST'
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+            ])
+            .then(data => {
+                console.log('✅ Instance disconnected:', data);
+                showToast('Instancia desconectada exitosamente', 'success');
+                
+                // Update button immediately
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-check mr-1"></i>Desconectado';
+                    button.className = button.className.replace('bg-red-600', 'bg-gray-500');
+                }
+                
+                // Reload after delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('❌ Error disconnecting instance:', error);
+                const errorMsg = error.message === 'Timeout' ? 'La operación tardó demasiado' : error.message;
+                showToast(`Error al desconectar: ${errorMsg}`, 'error');
+                
+                // Restore button
+                if (button) {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            });
+        } else {
+            // User cancelled - restore button
+            if (button) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+    }, 100); // Small delay to show immediate feedback
 }
 
 // Test Message Functions
