@@ -236,7 +236,7 @@ router.get('/instances/:instanceId/autoresponses', canAccessInstance, async (req
 router.put('/instances/:instanceId/autoresponses/:responseId', canAccessInstance, async (req, res) => {
     try {
         const { responseId } = req.params;
-        const { keyword, responseMessage, matchType, caseSensitive, priority } = req.body;
+        const { keyword, responseMessage, matchType, caseSensitive, priority, isActive } = req.body;
 
         const autoResponse = await AutoResponse.findByPk(responseId);
         if (!autoResponse) {
@@ -260,6 +260,15 @@ router.put('/instances/:instanceId/autoresponses/:responseId', canAccessInstance
         if (matchType) autoResponse.matchType = matchType;
         if (caseSensitive !== undefined) autoResponse.caseSensitive = caseSensitive;
         if (priority !== undefined) autoResponse.priority = priority;
+        
+        // Handle isActive toggle
+        if (isActive !== undefined) {
+            if (isActive === 'toggle') {
+                autoResponse.isActive = !autoResponse.isActive;
+            } else {
+                autoResponse.isActive = Boolean(isActive);
+            }
+        }
 
         await autoResponse.save();
 
@@ -274,6 +283,41 @@ router.put('/instances/:instanceId/autoresponses/:responseId', canAccessInstance
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
+        });
+    }
+});
+
+/**
+ * Eliminar instancia de WhatsApp
+ */
+router.delete('/instances/:instanceId', canAccessInstance, async (req, res) => {
+    try {
+        const instanceId = parseInt(req.params.instanceId);
+        const instance = req.whatsappInstance;
+
+        // Desconectar el cliente si está activo
+        await whatsappService.disconnectInstance(instanceId);
+
+        // Eliminar todas las respuestas automáticas asociadas
+        await AutoResponse.destroy({
+            where: { whatsappInstanceId: instanceId }
+        });
+
+        // Eliminar la instancia
+        await instance.destroy();
+
+        logger.info(`Instancia ${instanceId} eliminada por ${req.user.email}`);
+
+        res.json({
+            success: true,
+            message: 'Instancia eliminada exitosamente'
+        });
+
+    } catch (error) {
+        logger.error('Error al eliminar instancia:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar la instancia'
         });
     }
 });
