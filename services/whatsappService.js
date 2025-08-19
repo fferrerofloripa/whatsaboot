@@ -360,10 +360,13 @@ class WhatsAppService {
 
             logger.info(`🔥 DEBUG: Instancia creada con ID: ${instance.id}`);
 
-            // Inicializar cliente WhatsApp inmediatamente
+            // Inicializar cliente WhatsApp de forma asíncrona (no bloquear la respuesta)
             logger.info(`🔥 DEBUG: Iniciando cliente WhatsApp para instancia ${instance.id}`);
-            await this.initializeInstance(instance.id);
-            logger.info(`🔥 DEBUG: Cliente inicializado para instancia ${instance.id}`);
+            setImmediate(() => {
+                this.initializeInstance(instance.id).catch(error => {
+                    logger.error(`Error inicializando instancia ${instance.id}:`, error);
+                });
+            });
 
             return {
                 success: true,

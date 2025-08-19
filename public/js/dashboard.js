@@ -36,17 +36,19 @@ try {
 
 // Helper function for API calls with optimized performance
 function apiCall(url, options = {}) {
+    const timeout = options.timeout || 30000; // Usar timeout personalizado o 30s por defecto
+    
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
             ...options.headers
         },
         // Add timeout to prevent hanging requests
-        signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined
+        signal: AbortSignal.timeout ? AbortSignal.timeout(timeout) : undefined
     };
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
     
     return fetch(url, { 
         ...defaultOptions, 
@@ -158,7 +160,8 @@ function createInstance() {
     
     apiCall('/api/bot/instances', {
         method: 'POST',
-        body: JSON.stringify({ numberName })
+        body: JSON.stringify({ numberName }),
+        timeout: 60000 // 60 segundos para creación de instancias
     })
     .then(data => {
         console.log('✅ Instance created successfully:', data);
