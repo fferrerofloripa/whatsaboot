@@ -10,7 +10,7 @@ try {
     
     if (socket) {
         // Listen for QR code updates
-        socket.on('qr-code', (data) => {
+        socket.on('qr_generated', (data) => {
             console.log('📱 QR Code recibido via Socket:', data);
             updateQRCode(data.instanceId, data.qrCode);
         });
@@ -412,6 +412,32 @@ function updateInstanceStatus(instanceId, status, phoneNumber) {
         window.location.reload();
     }, 1000);
 }
+
+// Global function for refreshing instance status (used in views)
+function refreshStatus(instanceId) {
+    console.log('🔄 Refreshing status for instance:', instanceId);
+    
+    showLoading();
+    
+    apiCall(`/api/bot/instances/${instanceId}/status`)
+    .then(data => {
+        console.log('✅ Status refreshed:', data);
+        showToast('Estado actualizado', 'success');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('❌ Error refreshing status:', error);
+        showToast(`Error al actualizar estado: ${error.message}`, 'error');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+// Global function for refreshing instance status (alias)
+window.refreshStatus = refreshStatus;
 
 // QR Tutorial Functions
 function startQRTutorial() {
