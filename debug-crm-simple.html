@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug CRM Simple</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-2xl font-bold mb-4">🔧 Debug CRM Simple</h1>
+        
+        <div class="bg-white rounded-lg shadow p-4 mb-4">
+            <button onclick="testAPI()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                🧪 Test API
+            </button>
+            <button onclick="testRender()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 ml-2">
+                🎨 Test Render
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- API Response -->
+            <div class="bg-white rounded-lg shadow">
+                <h2 class="text-lg font-semibold p-4 border-b">📡 API Response</h2>
+                <div id="apiResponse" class="p-4 text-sm font-mono bg-gray-50"></div>
+            </div>
+
+            <!-- Rendered Conversations -->
+            <div class="bg-white rounded-lg shadow">
+                <h2 class="text-lg font-semibold p-4 border-b">📋 Conversations</h2>
+                <div id="conversationsList" class="p-4"></div>
+            </div>
+        </div>
+
+        <!-- Console Log -->
+        <div class="bg-white rounded-lg shadow mt-4">
+            <h2 class="text-lg font-semibold p-4 border-b">📝 Console Log</h2>
+            <div id="consoleLog" class="p-4 text-sm font-mono bg-gray-50 max-h-60 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        let conversations = [];
+
+        function log(message) {
+            const consoleDiv = document.getElementById('consoleLog');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            console.log(message);
+        }
+
+        async function testAPI() {
+            log('🔍 Testing API...');
+            
+            try {
+                const response = await fetch('/api/conversations/instance/2', {
+                    credentials: 'include'
+                });
+
+                log(`📊 Response status: ${response.status}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Success! Got ${data.data?.conversations?.length || 0} conversations`);
+                    
+                    conversations = data.data?.conversations || [];
+                    
+                    document.getElementById('apiResponse').innerHTML = JSON.stringify(data, null, 2);
+                    
+                    if (conversations.length > 0) {
+                        log(`📋 First conversation: ${conversations[0].contactName}`);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ API Error: ${errorText}`);
+                    document.getElementById('apiResponse').innerHTML = errorText;
+                }
+
+            } catch (error) {
+                log(`🚨 Fetch Error: ${error.message}`);
+                document.getElementById('apiResponse').innerHTML = error.message;
+            }
+        }
+
+        function testRender() {
+            log('🎨 Testing render...');
+            
+            const container = document.getElementById('conversationsList');
+            
+            if (!container) {
+                log('❌ Container not found!');
+                return;
+            }
+
+            log(`📦 Container found, clearing...`);
+            container.innerHTML = '';
+
+            if (conversations.length === 0) {
+                log('⚠️ No conversations to render. Run API test first.');
+                container.innerHTML = '<p class="text-gray-500">No conversations loaded. Click "Test API" first.</p>';
+                return;
+            }
+
+            log(`🔧 Rendering ${conversations.length} conversations...`);
+
+            conversations.forEach((conv, index) => {
+                const div = document.createElement('div');
+                div.className = 'border-b border-gray-200 p-2 hover:bg-gray-50';
+                div.innerHTML = `
+                    <div class="font-medium">${conv.contactName || 'Unknown'}</div>
+                    <div class="text-sm text-gray-600">${conv.lastMessage || 'No message'}</div>
+                    <div class="text-xs text-gray-400">ID: ${conv.id}</div>
+                `;
+                container.appendChild(div);
+                log(`  ✓ Rendered: ${conv.contactName}`);
+            });
+
+            log(`✅ Render complete! ${container.children.length} items in DOM`);
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            log('🚀 Page loaded, starting auto-test...');
+            setTimeout(testAPI, 1000);
+        });
+    </script>
+</body>
+</html>

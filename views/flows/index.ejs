@@ -1,0 +1,106 @@
+<%- contentFor('pageTitle', 'Flow Builder') %>
+
+<!-- Flow Builder Dashboard -->
+<div class="h-full flex flex-col">
+    
+    <!-- Header Actions -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Flow Builder</h1>
+            <p class="text-gray-600 mt-1">Crea bots conversacionales de forma visual</p>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <!-- Instance Selector -->
+            <select id="instanceSelector" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500">
+                <option value="">Selecciona una instancia</option>
+                <% instances.forEach(instance => { %>
+                    <option value="<%= instance.id %>"><%= instance.numberName %> (<%= instance.status %>)</option>
+                <% }) %>
+            </select>
+            
+            <!-- Create New Flow Button -->
+            <button id="createFlowBtn" class="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2">
+                <i class="fas fa-plus"></i>
+                <span>Nuevo Flow</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Flow List -->
+    <div class="flex-1 p-6 overflow-auto">
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-16 hidden">
+            <div class="w-24 h-24 bg-gradient-to-br from-accent-100 to-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-project-diagram text-3xl text-accent-500"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">Crea tu primer Flow</h3>
+            <p class="text-gray-500 mb-6">Diseña conversaciones automatizadas para tu bot de WhatsApp</p>
+            <button onclick="document.getElementById('createFlowBtn').click()" class="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
+                Empezar Ahora
+            </button>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-16 hidden">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p class="text-gray-500">Cargando flows...</p>
+        </div>
+        
+        <!-- Flows Grid -->
+        <div id="flowsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Flow cards will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<!-- Create Flow Modal -->
+<div id="createFlowModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Crear Nuevo Flow</h3>
+        
+        <form id="createFlowForm">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Flow</label>
+                <input type="text" id="flowName" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                <textarea id="flowDescription" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Instancia de WhatsApp</label>
+                <select id="flowInstance" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                    <option value="">Selecciona una instancia</option>
+                    <% instances.forEach(instance => { %>
+                        <option value="<%= instance.id %>"><%= instance.numberName %> (<%= instance.status %>)</option>
+                    <% }) %>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Trigger</label>
+                <select id="flowTrigger" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                    <option value="keyword">Palabra Clave</option>
+                    <option value="welcome">Mensaje de Bienvenida</option>
+                    <option value="manual">Manual</option>
+                </select>
+            </div>
+            
+            <div id="triggerValueContainer" class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Palabra Clave</label>
+                <input type="text" id="flowTriggerValue" placeholder="ej: hola, menu, ayuda" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" id="cancelCreateFlow" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">Crear Flow</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/js/flows-index.js"></script>

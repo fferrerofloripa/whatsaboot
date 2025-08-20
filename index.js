@@ -24,6 +24,12 @@ const adminRoutes = require('./routes/admin');
 const botRoutes = require('./routes/bot');
 const logsRoutes = require('./routes/logs');
 const debugRoutes = require('./routes/debug');
+const conversationsRoutes = require('./routes/conversations');
+const notesRoutes = require('./routes/notes');
+const tagsRoutes = require('./routes/tags');
+const crmRoutes = require('./routes/crm');
+const flowsRoutes = require('./routes/flows');
+const funnelRoutes = require('./routes/funnel');
 
 // Importar middlewares
 const { isAuthenticated } = require('./middleware/auth');
@@ -48,6 +54,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 // Configuración de sesiones
 app.use(session({
@@ -103,10 +111,57 @@ app.get('/login', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/dashboard', isAuthenticated, dashboardRoutes);
+app.use('/crm', isAuthenticated, crmRoutes);
+app.use('/flows', isAuthenticated, flowsRoutes);
+app.use('/funnel', funnelRoutes);
 app.use('/admin', isAuthenticated, adminRoutes);
 app.use('/admin/logs', isAuthenticated, logsRoutes);
 app.use('/api/bot', isAuthenticated, botRoutes);
+app.use('/api/conversations', isAuthenticated, conversationsRoutes);
+app.use('/api/notes', isAuthenticated, notesRoutes);
+app.use('/api/tags', isAuthenticated, tagsRoutes);
 app.use('/debug', debugRoutes);
+
+// Debug routes for CRM (sin autenticación para testing)
+app.get('/debug-crm', (req, res) => {
+    res.sendFile(__dirname + '/debug-crm.html');
+});
+
+app.get('/debug-crm-simple', (req, res) => {
+    res.sendFile(__dirname + '/debug-crm-simple.html');
+});
+
+app.get('/test-conversations', async (req, res) => {
+    try {
+        const { Conversation, User } = require('./models');
+        
+        const conversations = await Conversation.findAll({
+            where: { whatsappInstanceId: 2, isActive: true },
+            limit: 10,
+            order: [['lastMessageAt', 'DESC']],
+            include: [
+                {
+                    model: User,
+                    as: 'assignedTo',
+                    attributes: ['id', 'displayName', 'email'],
+                    required: false
+                }
+            ]
+        });
+        
+        res.json({
+            success: true,
+            count: conversations.length,
+            data: conversations
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
 
 // Manejo de errores 404
 app.use((req, res) => {

@@ -1,0 +1,49 @@
+<div class="p-8">
+    <h1 class="text-2xl font-bold text-gray-800">CRM - Conversaciones</h1>
+    <p class="text-gray-600 mt-4">Sistema de gestión de conversaciones de WhatsApp.</p>
+    
+    <!-- Test básico -->
+    <div class="mt-8 bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold mb-4">Estado del sistema</h2>
+        <div class="space-y-2">
+            <p><strong>Usuario:</strong> <%= user ? user.displayName : 'No autenticado' %></p>
+            <p><strong>Instancias disponibles:</strong> <%= instances ? instances.length : 0 %></p>
+            <p><strong>Usuarios para asignación:</strong> <%= users ? users.length : 0 %></p>
+        </div>
+    </div>
+    
+    <!-- Lista de instancias -->
+    <% if (instances && instances.length > 0) { %>
+    <div class="mt-8 bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold mb-4">Instancias de WhatsApp</h2>
+        <div class="space-y-2">
+            <% instances.forEach(instance => { %>
+            <div class="flex items-center justify-between py-2 px-4 bg-gray-50 rounded-lg">
+                <div>
+                    <span class="font-medium"><%= instance.numberName %></span>
+                    <span class="text-sm text-gray-500 ml-2">(<%= instance.status %>)</span>
+                </div>
+                <a href="/crm/instance/<%= instance.id %>" class="px-3 py-1 bg-primary-500 text-white rounded text-sm hover:bg-primary-600">
+                    Ver conversaciones
+                </a>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <% } else { %>
+    <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-yellow-800 mb-2">No hay instancias configuradas</h2>
+        <p class="text-yellow-700">Primero debes configurar una instancia de WhatsApp.</p>
+        <a href="/dashboard" class="inline-block mt-4 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+            Ir al Dashboard
+        </a>
+    </div>
+    <% } %>
+    
+    <!-- Enlace al CRM completo -->
+    <div class="mt-8">
+        <a href="/crm/full" class="inline-block px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600">
+            Ir al CRM Completo
+        </a>
+    </div>
+</div>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <style>
+        .conversation-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .conversation-item.selected {
+            background-color: #eff6ff !important;
+            border-left: 4px solid #3b82f6 !important;
+            transform: translateX(4px) !important;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <h1 class="text-xl font-semibold text-gray-900">
+                            <i class="fas fa-comments text-primary-600 mr-2"></i>
+                            CRM - Conversaciones
+                        </h1>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button onclick="window.refreshConversations ? window.refreshConversations() : alert('Auto-load not ready yet')" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+                            🔄 Refrescar
+                        </button>
+                        <button onclick="window.testAPI ? window.testAPI() : alert('Test not ready')" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors">
+                            🧪 Test API
+                        </button>
+                        
+                        <div class="flex items-center space-x-3">
+                            <img src="<%= user.avatar || '/images/default-avatar.png' %>" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <span class="text-sm font-medium text-gray-700"><%= user.displayName %></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
+                
+                <!-- Left Sidebar - Conversations List -->
+                <div class="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-gray-900">Conversaciones</h2>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-500">
+                                    <i class="fas fa-circle text-green-400 mr-1"></i>
+                                    Instancia 2
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Status Tabs -->
+                        <div class="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                            <button onclick="filterByStatus('inbox')" class="tab-button flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 bg-white text-primary-600 shadow-sm" data-status="inbox">
+                                <span>Entrada</span>
+                                <span id="inbox-count" class="ml-2 px-2 py-0.5 bg-primary-100 text-primary-600 rounded-full text-xs">0</span>
+                            </button>
+                            <button onclick="filterByStatus('pending')" class="tab-button flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 text-gray-600 hover:text-gray-900" data-status="pending">
+                                <span>Esperando</span>
+                                <span id="pending-count" class="ml-2 px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">0</span>
+                            </button>
+                            <button onclick="filterByStatus('closed')" class="tab-button flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 text-gray-600 hover:text-gray-900" data-status="closed">
+                                <span>Finalizados</span>
+                                <span id="closed-count" class="ml-2 px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">0</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Search Bar -->
+                        <div class="mt-4 relative">
+                            <input type="text" id="searchInput" placeholder="Buscar conversaciones..." 
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                   oninput="filterConversations(this.value)"
+                                   onkeyup="filterConversations(this.value)">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Conversations List -->
+                    <div class="flex-1 overflow-y-auto">
+                        <div id="conversationsList" class="divide-y divide-gray-200">
+                            <!-- Conversations will be loaded here -->
+                            <div class="p-8 text-center text-gray-500">
+                                <div class="inline-block w-6 h-6 border-2 border-gray-300 border-t-primary-500 rounded-full animate-spin mb-4"></div>
+                                <p>Cargando conversaciones...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Content - Messages -->
+                <div class="lg:col-span-2 bg-white rounded-lg shadow overflow-hidden flex flex-col">
+                    <div class="flex-1 flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Selecciona una conversación</h3>
+                            <p class="text-sm text-gray-500">Elige una conversación de la lista para ver los mensajes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Auto-Load Script -->
+    <script>
+        console.log('✅ CRM Script Loaded');
+        
+        try {
+        
+        // Auto-load function
+        function autoLoadConversations() {
+            console.log('🔄 Loading conversations...');
+            
+            // Show loading state
+            var container = document.getElementById('conversationsList');
+            if (container) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #6b7280;"><div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top: 2px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px;"></div><br>Cargando conversaciones...</div>';
+            }
+            
+            fetch('/api/conversations/instance/2', {credentials: 'include'})
+            .then(r => r.json())
+            .then(d => {
+                console.log('✅ Loaded', d.data?.conversations?.length, 'conversations');
+                var c = document.getElementById('conversationsList');
+                if(c && d.data?.conversations) {
+                    c.innerHTML = '';
+                    d.data.conversations.forEach(function(conv) {
+                        // Create conversation item
+                        var div = document.createElement('div');
+                        div.className = 'conversation-item';
+                        div.style.cssText = 'padding: 16px; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s ease; background: white;';
+                        div.dataset.conversationId = conv.id;
+                        
+                        var initial = (conv.contactName || 'U').charAt(0).toUpperCase();
+                        var timeStr = '';
+                        if (conv.lastMessageAt) {
+                            var date = new Date(conv.lastMessageAt);
+                            timeStr = date.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                        }
+                        
+                        var statusColor = '#3b82f6';
+                        var statusText = '📥 Entrada';
+                        if (conv.status === 'pending') {
+                            statusColor = '#f59e0b';
+                            statusText = '⏳ Pendiente';
+                        } else if (conv.status === 'closed') {
+                            statusColor = '#10b981';
+                            statusText = '✅ Cerrada';
+                        }
+                        
+                        div.innerHTML = 
+                            '<div style="display: flex; align-items: flex-start; gap: 12px;">' +
+                                '<div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">' +
+                                    '<span style="color: white; font-weight: 600; font-size: 16px;">' + initial + '</span>' +
+                                '</div>' +
+                                '<div style="flex: 1; min-width: 0;">' +
+                                    '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">' +
+                                        '<h4 style="font-weight: 600; color: #111827; margin: 0; font-size: 15px; line-height: 1.2;">' + (conv.contactName || 'Usuario desconocido') + '</h4>' +
+                                        '<span style="font-size: 12px; color: #6b7280; font-weight: 500;">' + timeStr + '</span>' +
+                                    '</div>' +
+                                    '<p style="font-size: 13px; color: #6b7280; margin: 0 0 10px 0; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">' + (conv.lastMessage || 'Sin mensajes recientes') + '</p>' +
+                                    '<div style="display: flex; align-items: center; justify-content: space-between;">' +
+                                        '<span style="display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 600; background-color: ' + statusColor + '15; color: ' + statusColor + '; border: 1px solid ' + statusColor + '25;">' +
+                                            statusText +
+                                        '</span>' +
+                                        '<div style="display: flex; align-items: center; gap: 8px;">' +
+                                            (conv.unreadCount > 0 ? '<span style="background: #ef4444; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; min-width: 18px; text-align: center;">' + conv.unreadCount + '</span>' : '') +
+                                            '<span style="font-size: 11px; color: #9ca3af; font-weight: 500;">#' + conv.id + '</span>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>';
+                        
+                        // Add interactions
+                        div.addEventListener('mouseenter', function() {
+                            this.style.backgroundColor = '#f8fafc';
+                            this.style.transform = 'translateX(4px)';
+                            this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                        });
+                        
+                        div.addEventListener('mouseleave', function() {
+                            if (!this.classList.contains('selected')) {
+                                this.style.backgroundColor = 'white';
+                                this.style.transform = 'translateX(0)';
+                                this.style.boxShadow = 'none';
+                            }
+                        });
+                        
+                        div.addEventListener('click', function() {
+                            var items = c.querySelectorAll('.conversation-item');
+                            for (var j = 0; j < items.length; j++) {
+                                items[j].classList.remove('selected');
+                                items[j].style.backgroundColor = 'white';
+                                items[j].style.borderLeft = 'none';
+                                items[j].style.transform = 'translateX(0)';
+                            }
+                            
+                            this.classList.add('selected');
+                            this.style.backgroundColor = '#eff6ff';
+                            this.style.borderLeft = '4px solid #3b82f6';
+                            this.style.transform = 'translateX(4px)';
+                            
+                            console.log('Selected conversation:', conv.contactName, 'ID:', conv.id);
+                            loadMessages(conv.id, conv.contactName);
+                        });
+                        
+                        c.appendChild(div);
+                    });
+                }
+            })
+            .catch(e => {
+                console.error('❌ Error loading conversations:', e);
+                var container = document.getElementById('conversationsList');
+                if (container) {
+                    container.innerHTML = '<div style="padding: 40px; text-align: center; color: #ef4444;">Error cargando conversaciones<br><button onclick="autoLoadConversations()" style="margin-top: 12px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">Reintentar</button></div>';
+                }
+            });
+        }
+        
+        // Load messages function
+        function loadMessages(conversationId, contactName) {
+            console.log('💬 Loading messages for:', contactName);
+            
+            // Find the message area (right side of CRM)
+            var messageArea = document.querySelector('.lg\\:col-span-2') || 
+                             document.querySelector('.flex.flex-col');
+            
+            if (!messageArea) {
+                console.error('❌ Message area not found');
+                return;
+            }
+            
+            // Show loading in message area
+            messageArea.innerHTML = 
+                '<div style="padding: 24px; border-bottom: 1px solid #e5e7eb; background: white;">' +
+                    '<div style="display: flex; align-items: center; gap: 12px;">' +
+                        '<div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">' +
+                            '<span style="color: white; font-weight: 600; font-size: 14px;">' + (contactName || 'U').charAt(0).toUpperCase() + '</span>' +
+                        '</div>' +
+                        '<div>' +
+                            '<h3 style="font-weight: 600; color: #111827; margin: 0; font-size: 16px;">' + (contactName || 'Usuario') + '</h3>' +
+                            '<p style="color: #6b7280; margin: 0; font-size: 13px;">Conversación #' + conversationId + '</p>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="flex: 1; padding: 20px; display: flex; align-items: center; justify-content: center;">' +
+                    '<div style="text-align: center; color: #6b7280;">' +
+                        '<div style="display: inline-block; width: 24px; height: 24px; border: 2px solid #e5e7eb; border-top: 2px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px;"></div>' +
+                        '<br>Cargando mensajes...' +
+                    '</div>' +
+                '</div>';
+            
+            // Fetch messages
+            fetch('/api/conversations/' + conversationId + '/messages', {credentials: 'include'})
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    var messages = data.data;
+                    
+                    // Render messages
+                    var messagesHtml = '';
+                    if (messages.length === 0) {
+                        messagesHtml = '<div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #9ca3af;">No hay mensajes en esta conversación</div>';
+                    } else {
+                        messagesHtml = '<div style="flex: 1; overflow-y: auto; padding: 16px;">';
+                        
+                        messages.forEach(function(msg) {
+                            var isOutgoing = msg.direction === 'outgoing';
+                            var messageTime = msg.sentAt ? new Date(msg.sentAt).toLocaleString('es-ES', {
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                day: '2-digit',
+                                month: '2-digit'
+                            }) : '';
+                            
+                            messagesHtml += 
+                                '<div style="margin-bottom: 16px; display: flex; ' + (isOutgoing ? 'justify-content: flex-end;' : 'justify-content: flex-start;') + '">' +
+                                    '<div style="max-width: 70%; padding: 12px 16px; border-radius: 18px; ' + 
+                                        (isOutgoing ? 
+                                            'background: #3b82f6; color: white; border-bottom-right-radius: 4px;' : 
+                                            'background: #f3f4f6; color: #111827; border-bottom-left-radius: 4px;'
+                                        ) + '">' +
+                                        '<div style="word-wrap: break-word; line-height: 1.4;">' + (msg.body || msg.content || 'Mensaje sin contenido') + '</div>' +
+                                        '<div style="font-size: 11px; margin-top: 4px; opacity: 0.7;">' + messageTime + '</div>' +
+                                    '</div>' +
+                                '</div>';
+                        });
+                        
+                        messagesHtml += '</div>';
+                    }
+                    
+                    // Add message input
+                    var inputHtml = 
+                        '<div style="border-top: 1px solid #e5e7eb; padding: 16px; background: #f9fafb;">' +
+                            '<div style="display: flex; gap: 12px; align-items: center;">' +
+                                '<input type="text" id="messageInput" placeholder="Escribe un mensaje..." style="flex: 1; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 24px; outline: none; font-size: 14px;" onkeypress="if(event.key===\'Enter\') sendMessage(' + conversationId + ')">' +
+                                '<button onclick="sendMessage(' + conversationId + ')" style="padding: 12px 20px; background: #3b82f6; color: white; border: none; border-radius: 24px; cursor: pointer; font-weight: 500; transition: background 0.2s;" onmouseover="this.style.background=\'#2563eb\'" onmouseout="this.style.background=\'#3b82f6\'">Enviar</button>' +
+                            '</div>' +
+                        '</div>';
+                    
+                    messageArea.innerHTML = 
+                        '<div style="padding: 24px; border-bottom: 1px solid #e5e7eb; background: white;">' +
+                            '<div style="display: flex; align-items: center; gap: 12px;">' +
+                                '<div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">' +
+                                    '<span style="color: white; font-weight: 600; font-size: 14px;">' + (contactName || 'U').charAt(0).toUpperCase() + '</span>' +
+                                '</div>' +
+                                '<div>' +
+                                    '<h3 style="font-weight: 600; color: #111827; margin: 0; font-size: 16px;">' + (contactName || 'Usuario') + '</h3>' +
+                                    '<p style="color: #6b7280; margin: 0; font-size: 13px;">' + messages.length + ' mensajes • Conversación #' + conversationId + '</p>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        messagesHtml +
+                        inputHtml;
+                    
+                    // Scroll to bottom
+                    var messagesContainer = messageArea.querySelector('[style*="overflow-y: auto"]');
+                    if (messagesContainer) {
+                        setTimeout(function() {
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        }, 100);
+                    }
+                    
+                } else {
+                    messageArea.innerHTML = 
+                        '<div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #ef4444;">' +
+                            'Error cargando mensajes: ' + (data.message || 'Error desconocido') +
+                        '</div>';
+                }
+            })
+            .catch(e => {
+                console.error('❌ Error loading messages:', e);
+                messageArea.innerHTML = 
+                    '<div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #ef4444;">' +
+                        'Error de conexión: ' + e.message +
+                    '</div>';
+            });
+        }
+        
+        // Send message function
+        function sendMessage(conversationId) {
+            var input = document.getElementById('messageInput');
+            if (!input || !input.value.trim()) return;
+            
+            var message = input.value.trim();
+            input.value = '';
+            input.disabled = true;
+            
+            fetch('/api/conversations/' + conversationId + '/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({body: message})
+            })
+            .then(r => r.json())
+            .then(data => {
+                input.disabled = false;
+                input.focus();
+                
+                // Reload messages to show the new one
+                var selectedConv = document.querySelector('.conversation-item.selected');
+                if (selectedConv) {
+                    var contactName = selectedConv.querySelector('h4').textContent;
+                    loadMessages(conversationId, contactName);
+                }
+            })
+            .catch(e => {
+                console.error('❌ Error sending message:', e);
+                input.disabled = false;
+                input.value = message; // Restore message
+                alert('Error enviando mensaje: ' + e.message);
+            });
+        }
+        
+        // Filter conversations function
+        function filterConversations(searchTerm) {
+            
+            var conversationItems = document.querySelectorAll('.conversation-item');
+            var visibleCount = 0;
+            
+            conversationItems.forEach(function(item) {
+                var contactName = item.querySelector('h4').textContent.toLowerCase();
+                var lastMessage = item.querySelector('p').textContent.toLowerCase();
+                var conversationId = item.dataset.conversationId;
+                
+                var searchLower = searchTerm.toLowerCase().trim();
+                var isVisible = searchLower === '' || 
+                               contactName.includes(searchLower) || 
+                               lastMessage.includes(searchLower) ||
+                               conversationId.includes(searchLower);
+                
+                if (isVisible) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Show/hide no results message
+            var container = document.getElementById('conversationsList');
+            var noResultsMsg = container.querySelector('.no-results-message');
+            
+            if (visibleCount === 0 && searchTerm.trim() !== '') {
+                if (!noResultsMsg) {
+                    var noResults = document.createElement('div');
+                    noResults.className = 'no-results-message';
+                    noResults.style.cssText = 'padding: 40px 20px; text-align: center; color: #6b7280;';
+                    noResults.innerHTML = 
+                        '<div style="font-size: 48px; margin-bottom: 16px;">🔍</div>' +
+                        '<h3 style="font-weight: 600; margin: 0 0 8px 0; color: #374151;">No se encontraron conversaciones</h3>' +
+                        '<p style="margin: 0; font-size: 14px;">Intenta con otros términos de búsqueda</p>' +
+                        '<button onclick="clearSearch()" style="margin-top: 16px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">Limpiar búsqueda</button>';
+                    container.appendChild(noResults);
+                }
+            } else if (noResultsMsg) {
+                noResultsMsg.remove();
+            }
+            
+
+        }
+        
+        // Clear search function
+        function clearSearch() {
+            var searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                filterConversations('');
+                searchInput.focus();
+            }
+        }
+        
+        // Status filter function
+        function filterByStatus(status) {
+            
+            var conversationItems = document.querySelectorAll('.conversation-item');
+            var visibleCount = 0;
+            
+            conversationItems.forEach(function(item) {
+                var statusBadge = item.querySelector('[style*="border-radius: 16px"]');
+                var itemStatus = 'inbox'; // default
+                
+                if (statusBadge && statusBadge.textContent.includes('Pendiente')) {
+                    itemStatus = 'pending';
+                } else if (statusBadge && statusBadge.textContent.includes('Cerrada')) {
+                    itemStatus = 'closed';
+                }
+                
+                var isVisible = status === 'all' || itemStatus === status;
+                
+                if (isVisible) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+
+        }
+        
+        // Auto-load after 1 second
+        setTimeout(function() {
+            autoLoadConversations();
+        }, 1000);
+        
+        // Test API function
+        function testAPI() {
+            console.log('🧪 Testing API...');
+            
+            fetch('/api/conversations/instance/2', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                
+                return response.text(); // Get as text first to see what we're getting
+            })
+            .then(text => {
+                try {
+                    var data = JSON.parse(text);
+                    alert('✅ API Test Success! Found ' + (data.data?.conversations?.length || 0) + ' conversations');
+                } catch (e) {
+                    alert('❌ API returned non-JSON: ' + text.substring(0, 100));
+                }
+            })
+            .catch(error => {
+                alert('❌ API Test Failed: ' + error.message);
+            });
+        }
+        
+        // Make functions globally available
+        window.refreshConversations = autoLoadConversations;
+        window.loadMessages = loadMessages;
+        window.sendMessage = sendMessage;
+        window.filterConversations = filterConversations;
+        window.clearSearch = clearSearch;
+        window.filterByStatus = filterByStatus;
+        window.testAPI = testAPI;
+    } catch (globalError) {
+        console.error('CRM Script Error:', globalError);
+    }
+    </script>
+    
+</body>
+</html>

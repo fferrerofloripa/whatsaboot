@@ -1,0 +1,304 @@
+
+
+<!-- Three Column Layout -->
+<div class="flex h-full">
+    
+    <!-- Column 2: Conversation List -->
+    <div class="w-96 bg-white border-r border-gray-200 flex flex-col">
+        
+        <!-- Header with tabs and filters -->
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800">Conversaciones</h2>
+                <div class="flex items-center space-x-2">
+                    <!-- Instance Selector -->
+                    <select id="instanceSelector" class="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-primary-500">
+                        <option value="">Todas las instancias</option>
+                    </select>
+                    <!-- Refresh Button -->
+                    <button id="refreshBtn" class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                        <i class="fas fa-sync-alt text-gray-600 text-sm"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Status Tabs -->
+            <div class="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                <button class="tab-button flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 bg-white text-primary-600 shadow-sm" data-status="inbox">
+                    <span>Entrada</span>
+                    <span id="inbox-count" class="ml-2 px-2 py-0.5 bg-primary-100 text-primary-600 rounded-full text-xs">0</span>
+                </button>
+                <button class="tab-button flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 text-gray-600 hover:text-gray-900" data-status="pending">
+                    <span>Esperando</span>
+                    <span id="pending-count" class="ml-2 px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">0</span>
+                </button>
+                <button class="tab-button flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all duration-200 text-gray-600 hover:text-gray-900" data-status="closed">
+                    <span>Finalizados</span>
+                    <span id="closed-count" class="ml-2 px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">0</span>
+                </button>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="mt-4 relative">
+                <input type="text" id="searchInput" placeholder="Buscar conversaciones..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+        </div>
+        
+        <!-- Conversations List -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+            <!-- Loading State -->
+            <div id="loadingState" class="p-6 text-center hidden">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-3"></div>
+                <p class="text-gray-500 text-sm">Cargando conversaciones...</p>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="p-8 text-center hidden">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-inbox text-2xl text-gray-400"></i>
+                </div>
+                <p class="text-lg font-medium text-gray-700 mb-2">No hay conversaciones</p>
+                <p class="text-sm text-gray-500">Las conversaciones aparecerán aquí cuando lleguen mensajes</p>
+            </div>
+            
+            <!-- Conversations Container -->
+            <div id="conversationsList" class="divide-y divide-gray-100">
+                <!-- Conversation items will be inserted here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Column 3: Chat Viewer -->
+    <div class="flex-1 flex flex-col bg-gray-50">
+        
+        <!-- Chat Header -->
+        <div id="chatHeader" class="bg-white border-b border-gray-200 p-4 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <!-- Contact Avatar -->
+                    <div class="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-full flex items-center justify-center">
+                        <span id="contactAvatar" class="text-white font-semibold">?</span>
+                    </div>
+                    
+                    <!-- Contact Info -->
+                    <div>
+                        <h3 id="contactName" class="font-semibold text-gray-800">Selecciona una conversación</h3>
+                        <p id="contactStatus" class="text-sm text-gray-500">En línea hace 2 minutos</p>
+                    </div>
+                </div>
+                
+                <!-- Chat Actions -->
+                <div class="flex items-center space-x-2">
+                    <!-- Status Dropdown -->
+                    <select id="conversationStatus" class="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-primary-500">
+                        <option value="inbox">Entrada</option>
+                        <option value="pending">Esperando</option>
+                        <option value="closed">Finalizado</option>
+                    </select>
+                    
+                    <!-- Assign Agent -->
+                    <select id="assignAgent" class="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-primary-500">
+                        <option value="">Sin asignar</option>
+                    </select>
+                    
+                    <!-- More Actions -->
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                        <i class="fas fa-ellipsis-v text-gray-600"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tags Section -->
+            <div class="mt-3 flex items-center space-x-2">
+                <span class="text-sm text-gray-500">Etiquetas:</span>
+                <div id="conversationTags" class="flex flex-wrap gap-1">
+                    <!-- Tags will be inserted here -->
+                </div>
+                <button id="addTagBtn" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                    <i class="fas fa-plus"></i> Agregar
+                </button>
+            </div>
+        </div>
+        
+        <!-- Chat Content Area -->
+        <div class="flex-1 flex">
+            
+            <!-- Messages Area -->
+            <div class="flex-1 flex flex-col">
+                
+                <!-- Messages Container -->
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-4">
+                    <!-- Empty State for Chat -->
+                    <div id="chatEmptyState" class="h-full flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-24 h-24 bg-gradient-to-br from-primary-100 to-accent-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i class="fas fa-comments text-3xl text-primary-500"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Selecciona una conversación</h3>
+                            <p class="text-gray-500">Elige una conversación de la lista para ver los mensajes</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages List -->
+                    <div id="messagesList" class="space-y-4 hidden">
+                        <!-- Messages will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Message Input -->
+                <div id="messageInput" class="bg-white border-t border-gray-200 p-4 hidden">
+                    <div class="flex items-end space-x-3">
+                        <!-- Attachment Button -->
+                        <button class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                            <i class="fas fa-paperclip text-gray-600"></i>
+                        </button>
+                        
+                        <!-- Text Input -->
+                        <div class="flex-1">
+                            <textarea id="messageText" placeholder="Escribe tu mensaje..." 
+                                    class="w-full resize-none border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    rows="1"></textarea>
+                        </div>
+                        
+                        <!-- Send Button -->
+                        <button id="sendMessageBtn" class="w-10 h-10 rounded-lg bg-primary-500 hover:bg-primary-600 flex items-center justify-center transition-colors">
+                            <i class="fas fa-paper-plane text-white"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Sidebar: Notes & Info -->
+            <div class="w-80 bg-white border-l border-gray-200 flex flex-col" id="rightSidebar" style="display: none;">
+                
+                <!-- Sidebar Tabs -->
+                <div class="border-b border-gray-200">
+                    <nav class="flex">
+                        <button class="sidebar-tab flex-1 py-3 px-4 text-sm font-medium border-b-2 border-primary-500 text-primary-600" data-tab="notes">
+                            <i class="fas fa-sticky-note mr-2"></i>Notas
+                        </button>
+                        <button class="sidebar-tab flex-1 py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="info">
+                            <i class="fas fa-info-circle mr-2"></i>Info
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Notes Tab Content -->
+                <div id="notesTab" class="flex-1 flex flex-col">
+                    <!-- Notes Header -->
+                    <div class="p-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-medium text-gray-800">Notas Internas</h3>
+                            <button id="addNoteBtn" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                                <i class="fas fa-plus"></i> Nueva
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes List -->
+                    <div class="flex-1 overflow-y-auto custom-scrollbar p-4">
+                        <div id="notesList" class="space-y-3">
+                            <!-- Notes will be inserted here -->
+                        </div>
+                        
+                        <!-- Empty Notes State -->
+                        <div id="notesEmptyState" class="text-center py-8">
+                            <i class="fas fa-sticky-note text-2xl text-gray-300 mb-3"></i>
+                            <p class="text-sm text-gray-500">No hay notas aún</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Info Tab Content -->
+                <div id="infoTab" class="flex-1 p-4 hidden">
+                    <div class="space-y-4">
+                        <!-- Contact Details -->
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-2">Detalles del Contacto</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">Teléfono:</span>
+                                    <span id="contactPhone" class="text-gray-800">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">Último mensaje:</span>
+                                    <span id="lastMessageTime" class="text-gray-800">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">Estado:</span>
+                                    <span id="contactStatusInfo" class="text-gray-800">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Stats -->
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-2">Estadísticas</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">Total mensajes:</span>
+                                    <span id="totalMessages" class="text-gray-800">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">No leídos:</span>
+                                    <span id="unreadMessages" class="text-gray-800">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+
+<!-- Add Note Modal -->
+<div id="addNoteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Agregar Nota</h3>
+        <textarea id="noteText" placeholder="Escribe tu nota aquí..." 
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                rows="4"></textarea>
+        <div class="flex items-center mt-4">
+            <label class="flex items-center">
+                <input type="checkbox" id="noteImportant" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                <span class="ml-2 text-sm text-gray-700">Marcar como importante</span>
+            </label>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button id="cancelNoteBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+            <button id="saveNoteBtn" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Tag Modal -->
+<div id="addTagModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Agregar Etiqueta</h3>
+        <input type="text" id="tagName" placeholder="Nombre de la etiqueta" 
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent mb-4">
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
+            <div class="flex space-x-2">
+                <button class="tag-color w-6 h-6 rounded-full bg-red-500" data-color="#ef4444"></button>
+                <button class="tag-color w-6 h-6 rounded-full bg-blue-500" data-color="#3b82f6"></button>
+                <button class="tag-color w-6 h-6 rounded-full bg-green-500" data-color="#10b981"></button>
+                <button class="tag-color w-6 h-6 rounded-full bg-yellow-500" data-color="#f59e0b"></button>
+                <button class="tag-color w-6 h-6 rounded-full bg-purple-500" data-color="#8b5cf6"></button>
+                <button class="tag-color w-6 h-6 rounded-full bg-pink-500" data-color="#ec4899"></button>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3">
+            <button id="cancelTagBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+            <button id="saveTagBtn" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/js/crm-modern.js"></script>

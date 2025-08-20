@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug CRM</title>
+    <script>
+        async function testAPI() {
+            console.log('🔧 Testing CRM API...');
+            
+            try {
+                // Test 1: Verificar que podemos acceder a las conversaciones
+                console.log('📞 Testing /api/conversations/instance/2...');
+                const response = await fetch('/api/conversations/instance/2', {
+                    credentials: 'include' // Incluir cookies de sesión
+                });
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ API Response:', data);
+                    console.log(`📊 Found ${data.data ? data.data.length : 0} conversations`);
+                    
+                    if (data.data && data.data.length > 0) {
+                        console.log('📝 Sample conversation:', data.data[0]);
+                    }
+                } else {
+                    const error = await response.text();
+                    console.log('❌ API Error:', error);
+                }
+                
+                // Test 2: Verificar instancias
+                console.log('\n📞 Testing /api/bot/instances...');
+                const instancesResponse = await fetch('/api/bot/instances', {
+                    credentials: 'include' // Incluir cookies de sesión
+                });
+                console.log('Instances response status:', instancesResponse.status);
+                
+                if (instancesResponse.ok) {
+                    const instancesData = await instancesResponse.json();
+                    console.log('✅ Instances:', instancesData);
+                } else {
+                    const error = await instancesResponse.text();
+                    console.log('❌ Instances Error:', error);
+                }
+                
+            } catch (error) {
+                console.error('❌ Network Error:', error);
+            }
+        }
+        
+        // Auto-run test when page loads
+        window.addEventListener('DOMContentLoaded', testAPI);
+    </script>
+</head>
+<body>
+    <h1>Debug CRM API</h1>
+    <p>Check the browser console for API test results.</p>
+    <button onclick="testAPI()">Run Test Again</button>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<%- contentFor('pageTitle', `${funnel.name} - Kanban`) %>
+
+<!-- Kanban Board -->
+<div class="h-full flex flex-col bg-gray-100">
+    
+    <!-- Board Header -->
+    <div class="bg-white border-b border-gray-200 p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="/funnel" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver
+                </a>
+                <div class="h-6 border-l border-gray-300"></div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 flex items-center">
+                        <div class="w-4 h-4 rounded-full mr-3" style="background-color: <%= funnel.color %>"></div>
+                        <%= funnel.name %>
+                    </h1>
+                    <p class="text-sm text-gray-600"><%= funnel.description || 'Sin descripción' %></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- Stats -->
+                <div class="flex items-center space-x-4 text-sm text-gray-600 mr-4">
+                    <span id="totalConversations" class="flex items-center">
+                        <i class="fas fa-comments mr-1"></i>
+                        0 conversaciones
+                    </span>
+                    <span id="totalValue" class="flex items-center">
+                        <i class="fas fa-dollar-sign mr-1"></i>
+                        $0 en proceso
+                    </span>
+                </div>
+                
+                <!-- Actions -->
+                <button id="addStageBtn" class="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-plus mr-1"></i>
+                    Agregar Etapa
+                </button>
+                <button id="settingsBtn" class="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Kanban Board -->
+    <div class="flex-1 overflow-x-auto p-4">
+        <div id="kanbanBoard" class="flex space-x-6 min-w-max h-full">
+            <!-- Stages will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<!-- Add Stage Modal -->
+<div id="addStageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Agregar Etapa</h3>
+        
+        <form id="addStageForm">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Etapa</label>
+                <input type="text" id="stageName" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                <textarea id="stageDescription" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                <div class="flex space-x-2">
+                    <button type="button" class="stage-color w-6 h-6 rounded-full bg-gray-500 ring-2 ring-offset-2 ring-gray-500" data-color="#6b7280"></button>
+                    <button type="button" class="stage-color w-6 h-6 rounded-full bg-blue-500" data-color="#3b82f6"></button>
+                    <button type="button" class="stage-color w-6 h-6 rounded-full bg-green-500" data-color="#10b981"></button>
+                    <button type="button" class="stage-color w-6 h-6 rounded-full bg-yellow-500" data-color="#f59e0b"></button>
+                    <button type="button" class="stage-color w-6 h-6 rounded-full bg-red-500" data-color="#ef4444"></button>
+                    <button type="button" class="stage-color w-6 h-6 rounded-full bg-purple-500" data-color="#8b5cf6"></button>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" id="cancelAddStage" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">Agregar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Conversation Detail Modal -->
+<div id="conversationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg w-2/3 max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+        <!-- Modal Header -->
+        <div class="border-b border-gray-200 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div id="modalContactAvatar" class="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-full flex items-center justify-center">
+                        <span class="text-white font-semibold">?</span>
+                    </div>
+                    <div>
+                        <h3 id="modalContactName" class="font-semibold text-gray-800">Contacto</h3>
+                        <p id="modalContactInfo" class="text-sm text-gray-500">+1234567890</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="modalCloseBtn" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center">
+                        <i class="fas fa-times text-gray-500"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="flex h-96">
+            <!-- Messages -->
+            <div class="flex-1 flex flex-col">
+                <div class="flex-1 overflow-y-auto p-4" id="modalMessages">
+                    <!-- Messages will be loaded here -->
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="border-t border-gray-200 p-4">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="quickMessage" placeholder="Respuesta rápida..." 
+                               class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+                        <button id="sendQuickMessage" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 text-sm">
+                            Enviar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="w-80 border-l border-gray-200 p-4">
+                <!-- Stage Movement -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mover a etapa</label>
+                    <select id="moveToStage" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
+                        <!-- Options will be populated -->
+                    </select>
+                </div>
+                
+                <!-- Notes -->
+                <div class="mb-6">
+                    <h4 class="font-medium text-gray-800 mb-3">Notas</h4>
+                    <div id="modalNotes" class="space-y-2 mb-3">
+                        <!-- Notes will be loaded here -->
+                    </div>
+                    <button id="addNoteBtn" class="text-sm text-primary-600 hover:text-primary-700">
+                        <i class="fas fa-plus mr-1"></i>
+                        Agregar nota
+                    </button>
+                </div>
+                
+                <!-- Tags -->
+                <div>
+                    <h4 class="font-medium text-gray-800 mb-3">Etiquetas</h4>
+                    <div id="modalTags" class="flex flex-wrap gap-1 mb-3">
+                        <!-- Tags will be loaded here -->
+                    </div>
+                    <button id="addTagBtn" class="text-sm text-primary-600 hover:text-primary-700">
+                        <i class="fas fa-plus mr-1"></i>
+                        Agregar etiqueta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Global Variables -->
+<script>
+window.funnelData = {
+    id: <%= funnel.id %>,
+    name: '<%= funnel.name %>',
+    instanceId: <%= funnel.whatsappInstanceId %>
+};
+</script>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="/js/funnel-board.js"></script>

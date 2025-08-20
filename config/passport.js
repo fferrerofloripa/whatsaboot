@@ -26,6 +26,21 @@ passport.use(new GoogleStrategy({
             return done(null, user);
         }
 
+        // Si no existe por Google ID, buscar por email
+        user = await User.findOne({ where: { email: profile.emails[0].value } });
+
+        if (user) {
+            // Usuario existe con el mismo email, actualizar Google ID y última conexión
+            await user.update({
+                googleId: profile.id,
+                displayName: profile.displayName,
+                avatar: profile.photos[0] ? profile.photos[0].value : null,
+                lastLogin: new Date()
+            });
+            logger.info('Usuario existente actualizado con Google ID:', user.email);
+            return done(null, user);
+        }
+
         // Usuario no existe, verificar si es el primer usuario (será admin)
         const userCount = await User.count();
         const isFirstUser = userCount === 0;

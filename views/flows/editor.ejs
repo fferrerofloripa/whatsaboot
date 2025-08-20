@@ -1,0 +1,430 @@
+<%- contentFor('pageTitle', flow ? `Editando: ${flow.name}` : 'Nuevo Flow') %>
+
+<!-- Flow Editor -->
+<div class="h-full flex">
+    
+    <!-- Left Sidebar - Node Library -->
+    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <!-- Header -->
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="font-semibold text-gray-800">Componentes</h3>
+                <button id="saveFlowBtn" class="px-3 py-1.5 bg-primary-500 text-white text-sm rounded-md hover:bg-primary-600 transition-colors">
+                    <i class="fas fa-save mr-1"></i>
+                    Guardar
+                </button>
+            </div>
+            <% if (flow) { %>
+                <p class="text-sm text-gray-600 mt-1">Editando: <%= flow.name %></p>
+            <% } %>
+        </div>
+        
+        <!-- Node Categories -->
+        <div class="flex-1 overflow-y-auto p-4">
+            <!-- Triggers -->
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">Inicio</h4>
+                <div class="space-y-2">
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="start" data-name="Inicio">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-play text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Inicio</div>
+                                <div class="text-xs text-gray-500">Punto de entrada</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages -->
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">Mensajes</h4>
+                <div class="space-y-2">
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="message" data-name="Enviar Mensaje">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-comment text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Enviar Mensaje</div>
+                                <div class="text-xs text-gray-500">Envía un mensaje</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="question" data-name="Hacer Pregunta">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-question text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Hacer Pregunta</div>
+                                <div class="text-xs text-gray-500">Espera respuesta</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Logic -->
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">Lógica</h4>
+                <div class="space-y-2">
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="condition" data-name="Condición">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-code-branch text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Condición</div>
+                                <div class="text-xs text-gray-500">If/Else lógico</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="delay" data-name="Esperar">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-clock text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Esperar</div>
+                                <div class="text-xs text-gray-500">Pausa el flujo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">Acciones</h4>
+                <div class="space-y-2">
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="action" data-name="Acción">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-cog text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Acción</div>
+                                <div class="text-xs text-gray-500">Ejecuta acción</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="webhook" data-name="Webhook">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-link text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Webhook</div>
+                                <div class="text-xs text-gray-500">Llamada HTTP</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="human_handoff" data-name="Transferir">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Transferir</div>
+                                <div class="text-xs text-gray-500">A agente humano</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- End -->
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">Fin</h4>
+                <div class="space-y-2">
+                    <div class="node-template p-3 border border-gray-200 rounded-lg cursor-move hover:border-primary-300 hover:bg-primary-50 transition-colors" 
+                         data-type="end" data-name="Finalizar">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-stop text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">Finalizar</div>
+                                <div class="text-xs text-gray-500">Termina el flujo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Canvas -->
+    <div class="flex-1 flex flex-col bg-gray-50">
+        <!-- Canvas Header -->
+        <div class="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="/flows" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver
+                </a>
+                <div class="h-6 border-l border-gray-300"></div>
+                <div>
+                    <h2 class="font-semibold text-gray-800">
+                        <%= flow ? flow.name : 'Nuevo Flow' %>
+                    </h2>
+                    <p class="text-sm text-gray-500">
+                        <%= flow ? flow.description || 'Sin descripción' : 'Arrastra componentes al canvas' %>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button id="testFlowBtn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-play mr-2"></i>
+                    Probar
+                </button>
+                <button id="publishFlowBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Publicar
+                </button>
+            </div>
+        </div>
+        
+        <!-- Canvas -->
+        <div class="flex-1 relative overflow-hidden">
+            <div id="flowCanvas" class="w-full h-full bg-dot-pattern">
+                <!-- Canvas content will be rendered here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Sidebar - Properties -->
+    <div id="propertiesSidebar" class="w-80 bg-white border-l border-gray-200 flex flex-col hidden">
+        <!-- Properties Header -->
+        <div class="p-4 border-b border-gray-200">
+            <h3 class="font-semibold text-gray-800">Propiedades</h3>
+            <p class="text-sm text-gray-600" id="selectedNodeName">Selecciona un nodo</p>
+        </div>
+        
+        <!-- Properties Content -->
+        <div class="flex-1 overflow-y-auto p-4" id="propertiesContent">
+            <div class="text-center text-gray-500 py-8">
+                <i class="fas fa-mouse-pointer text-2xl mb-3"></i>
+                <p>Selecciona un nodo para ver sus propiedades</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Node Configuration Modals -->
+
+<!-- Message Node Modal -->
+<div id="messageNodeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Configurar Mensaje</h3>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
+            <textarea id="messageText" rows="4" placeholder="Escribe el mensaje que se enviará..." 
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+            <p class="text-xs text-gray-500 mt-1">Puedes usar variables como {{nombre}}, {{email}}</p>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <button type="button" class="modal-cancel px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+            <button type="button" class="modal-save px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Question Node Modal -->
+<div id="questionNodeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Configurar Pregunta</h3>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Pregunta</label>
+            <textarea id="questionText" rows="3" placeholder="¿Cuál es tu nombre?" 
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Guardar respuesta como</label>
+            <input type="text" id="saveResponseAs" placeholder="nombre" 
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            <p class="text-xs text-gray-500 mt-1">Variable donde se guardará la respuesta del usuario</p>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <button type="button" class="modal-cancel px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+            <button type="button" class="modal-save px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Condition Node Modal -->
+<div id="conditionNodeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Configurar Condición</h3>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Variable a evaluar</label>
+            <input type="text" id="conditionVariable" placeholder="lastUserResponse" 
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Operador</label>
+            <select id="conditionOperator" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                <option value="equals">Es igual a</option>
+                <option value="contains">Contiene</option>
+                <option value="starts_with">Comienza con</option>
+                <option value="greater_than">Mayor que</option>
+                <option value="less_than">Menor que</option>
+            </select>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Valor a comparar</label>
+            <input type="text" id="conditionValue" placeholder="si" 
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <button type="button" class="modal-cancel px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+            <button type="button" class="modal-save px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delay Node Modal -->
+<div id="delayNodeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Configurar Espera</h3>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo de espera</label>
+            <div class="flex space-x-2">
+                <input type="number" id="delayTime" min="1" value="5" 
+                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                <select id="delayUnit" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                    <option value="1000">Segundos</option>
+                    <option value="60000">Minutos</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <button type="button" class="modal-cancel px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+            <button type="button" class="modal-save px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Webhook Node Modal -->
+<div id="webhookNodeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Configurar Webhook</h3>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">URL</label>
+            <input type="url" id="webhookUrl" placeholder="https://api.ejemplo.com/webhook" 
+                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Método</label>
+            <select id="webhookMethod" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500">
+                <option value="POST">POST</option>
+                <option value="GET">GET</option>
+                <option value="PUT">PUT</option>
+            </select>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <button type="button" class="modal-cancel px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+            <button type="button" class="modal-save px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Styles -->
+<style>
+.bg-dot-pattern {
+    background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.node {
+    position: absolute;
+    min-width: 150px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: move;
+    user-select: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.node.selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.node-handle {
+    width: 10px;
+    height: 10px;
+    background: #6b7280;
+    border-radius: 50%;
+    position: absolute;
+    cursor: crosshair;
+}
+
+.node-handle.input {
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.node-handle.output {
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.connection-line {
+    stroke: #6b7280;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+}
+
+.connection-line.selected {
+    stroke: #3b82f6;
+    stroke-width: 3;
+}
+</style>
+
+<!-- Scripts -->
+<script>
+// Global variables for the editor
+window.flowEditor = {
+    flowId: <%= flow ? flow.id : 'null' %>,
+    nodes: <%= JSON.stringify(nodes || []) %>,
+    edges: <%= JSON.stringify(edges || []) %>
+};
+</script>
+<script src="/js/flows-editor.js"></script>

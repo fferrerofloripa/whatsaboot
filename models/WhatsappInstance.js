@@ -124,15 +124,13 @@ WhatsappInstance.prototype.needsQr = function() {
 // Métodos estáticos
 WhatsappInstance.findByUserId = function(userId) {
     return this.findAll({ 
-        where: { userId, isActive: true },
-        include: ['autoResponses']
+        where: { userId, isActive: true }
     });
 };
 
 WhatsappInstance.findConnected = function() {
     return this.findAll({ 
-        where: { status: 'connected', isActive: true },
-        include: ['user']
+        where: { status: 'connected', isActive: true }
     });
 };
 
