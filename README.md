@@ -412,6 +412,6 @@ Este proyecto está bajo la licencia MIT. Ver `LICENSE` para más detalles.
 
 **⭐ ¡Dale una estrella si te gusta el proyecto! ⭐**
 
-Hecho con ❤️ por [Tu Nombre](https://github.com/tu-usuario)
+Hecho con ❤️ por [Tu Nombre](https://github.com/fferrerofloripa)
 
 </div>
