@@ -34,6 +34,10 @@ router.get('/', isAuthenticated, async (req, res) => {
     try {
         // Obtener las instancias del usuario
         const instances = await WhatsappInstance.findByUserId(req.user.id);
+        console.log('🔍 CRM Route - Found instances for user:', req.user.id, instances.length);
+        instances.forEach(instance => {
+            console.log(`  - Instance ${instance.id}: ${instance.numberName} (${instance.status})`);
+        });
         
         // Obtener todos los usuarios para asignación de agentes
         const users = await User.findAll({

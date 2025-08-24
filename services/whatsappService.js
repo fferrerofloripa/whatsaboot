@@ -81,8 +81,15 @@ class WhatsAppService {
             // Actualizar estado
             await instance.updateStatus('connecting');
 
-            // Inicializar cliente
+            // Inicializar cliente con timeout
+            const initTimeout = setTimeout(() => {
+                logger.warn(`⏰ Timeout de inicialización para instancia ${instanceId}, reiniciando...`);
+                client.destroy().catch(() => {});
+                this.clients.delete(instanceId);
+            }, 60000); // 60 segundos timeout
+
             await client.initialize();
+            clearTimeout(initTimeout);
 
             return client;
 
@@ -168,7 +175,22 @@ class WhatsAppService {
         // Evento de mensaje recibido
         client.on('message', async (message) => {
             try {
-                await this.handleIncomingMessage(message, instance);
+                const result = await this.handleIncomingMessage(message, instance);
+                
+                // Emit real-time update via Socket.IO
+                if (result && global.io) {
+                    global.io.emit('newMessage', {
+                        instanceId: instanceId,
+                        conversationId: result.conversationId,
+                        message: {
+                            body: message.body,
+                            content: message.body,
+                            direction: message.fromMe ? 'outgoing' : 'incoming',
+                            sentAt: new Date()
+                        },
+                        contactName: result.contactName
+                    });
+                }
             } catch (error) {
                 logger.error(`Error al manejar mensaje para instancia ${instanceId}:`, error);
             }
@@ -227,10 +249,55 @@ class WhatsAppService {
             // Procesar todos los mensajes (entrantes y salientes) para el CRM
             logger.info(`Mensaje ${message.fromMe ? 'enviado' : 'recibido'} en instancia ${instance.id}: ${message.body}`);
 
-            // Obtener información del contacto
-            const contact = await message.getContact();
-            const contactId = contact.id._serialized;
-            const contactName = contact.name || contact.pushname || contact.number;
+            // Obtener información del chat (puede ser contacto individual o grupo)
+            const chat = await message.getChat();
+            const contactId = chat.id._serialized;
+            
+            // Detectar si es un grupo
+            const isGroup = chat.isGroup;
+            let contactName, profilePicUrl, groupDescription, groupParticipants;
+            
+            if (isGroup) {
+                // Es un grupo
+                contactName = chat.name;
+                groupDescription = chat.description || null;
+                
+                // Obtener participantes del grupo
+                try {
+                    const participants = chat.participants || [];
+                    groupParticipants = participants.map(p => ({
+                        id: p.id._serialized,
+                        isAdmin: p.isAdmin,
+                        isSuperAdmin: p.isSuperAdmin
+                    }));
+                } catch (error) {
+                    groupParticipants = [];
+                }
+                
+                // Obtener foto del grupo
+                try {
+                    profilePicUrl = await chat.getProfilePicUrl();
+                } catch (error) {
+                    profilePicUrl = null;
+                }
+                
+                logger.info(`📱 Mensaje de grupo: ${contactName} (${groupParticipants.length} participantes)`);
+            } else {
+                // Es un contacto individual
+                const contact = await message.getContact();
+                contactName = contact.name || contact.pushname || contact.number;
+                groupDescription = null;
+                groupParticipants = null;
+                
+                // Obtener foto de perfil del contacto
+                try {
+                    profilePicUrl = await contact.getProfilePicUrl();
+                } catch (error) {
+                    profilePicUrl = null;
+                }
+                
+                logger.info(`👤 Mensaje individual: ${contactName}`);
+            }
 
             // Buscar o crear conversación
             let conversation = await Conversation.findOne({
@@ -246,6 +313,10 @@ class WhatsAppService {
                     whatsappInstanceId: instance.id,
                     contactId: contactId,
                     contactName: contactName,
+                    contactAvatar: profilePicUrl,
+                    isGroup: isGroup,
+                    groupDescription: groupDescription,
+                    groupParticipants: groupParticipants,
                     status: 'inbox', // Nuevas conversaciones van a "Entrada"
                     lastMessage: message.body,
                     lastMessageAt: new Date(message.timestamp * 1000),
@@ -253,10 +324,14 @@ class WhatsAppService {
                     isActive: true
                 });
 
-                logger.info(`Nueva conversación creada para ${contactName} (${contactId})`);
+                logger.info(`Nueva conversación creada para ${contactName} (${contactId}) - ${isGroup ? 'Grupo' : 'Individual'}`);
             } else {
                 // Actualizar conversación existente
                 const updateData = {
+                    contactAvatar: profilePicUrl, // Actualizar foto de perfil
+                    contactName: contactName, // Actualizar nombre (puede cambiar en grupos)
+                    groupDescription: groupDescription, // Actualizar descripción del grupo
+                    groupParticipants: groupParticipants, // Actualizar participantes del grupo
                     lastMessage: message.body,
                     lastMessageAt: new Date(message.timestamp * 1000)
                 };
@@ -383,9 +458,17 @@ class WhatsAppService {
                     }
                 }
             }
+            
+            // Return data for real-time updates
+            return {
+                conversationId: conversation.id,
+                contactName: contactName,
+                isNewConversation: !conversation.id // If conversation was just created
+            };
 
         } catch (error) {
             logger.error('Error al manejar mensaje entrante:', error);
+            return null;
         }
     }
 
@@ -652,6 +735,46 @@ class WhatsAppService {
 
         } catch (error) {
             logger.error('Error al inicializar instancias activas:', error);
+        }
+    }
+
+    /**
+     * Enviar mensaje por WhatsApp
+     */
+    async sendMessage(instanceId, contactId, messageText) {
+        try {
+            // Verificar que la instancia existe y está conectada
+            const instance = await WhatsappInstance.findByPk(instanceId);
+            if (!instance) {
+                throw new Error(`Instancia ${instanceId} no encontrada`);
+            }
+
+            if (instance.status !== 'connected') {
+                throw new Error(`Instancia ${instanceId} no está conectada (estado: ${instance.status})`);
+            }
+
+            // Obtener cliente de WhatsApp
+            const client = this.clients.get(instanceId);
+            if (!client) {
+                throw new Error(`Cliente WhatsApp no encontrado para instancia ${instanceId}`);
+            }
+
+            // Enviar mensaje
+            logger.info(`📤 Enviando mensaje desde instancia ${instanceId} a ${contactId}: ${messageText}`);
+            
+            const sentMessage = await client.sendMessage(contactId, messageText);
+            
+            logger.info(`✅ Mensaje enviado exitosamente desde instancia ${instanceId} a ${contactId}`);
+            
+            return {
+                success: true,
+                messageId: sentMessage.id._serialized,
+                timestamp: sentMessage.timestamp
+            };
+
+        } catch (error) {
+            logger.error(`❌ Error enviando mensaje desde instancia ${instanceId}:`, error);
+            throw error;
         }
     }
 }

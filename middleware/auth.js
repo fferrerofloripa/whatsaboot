@@ -8,9 +8,14 @@ const logger = require('../config/logger');
  * Middleware para verificar si el usuario está autenticado
  */
 function isAuthenticated(req, res, next) {
+    logger.info(`🔐 Auth check: ${req.method} ${req.originalUrl} - Authenticated: ${req.isAuthenticated()}`);
+    
     if (req.isAuthenticated()) {
+        logger.info(`✅ User authenticated: ${req.user?.email}`);
         return next();
     }
+    
+    logger.warn(`❌ User not authenticated for ${req.originalUrl}`);
     
     // Si es una petición AJAX, devolver error JSON
     if (req.xhr || req.headers.accept.indexOf('json') > -1) {

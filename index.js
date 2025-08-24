@@ -8,6 +8,7 @@ const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -37,6 +38,9 @@ const { isAuthenticated } = require('./middleware/auth');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+
+// Make io available globally for services
+global.io = io;
 
 // Configuración del motor de vistas
 app.set('view engine', 'ejs');
@@ -86,6 +90,7 @@ app.set('io', io);
 
 // Configurar Socket.IO en el servicio de WhatsApp
 const whatsappService = require('./services/whatsappService');
+const HealthChecker = require('./services/healthChecker');
 whatsappService.setSocketIO(io);
 
 // Rutas
@@ -203,10 +208,61 @@ async function startApp() {
             logger.info('No se encontró usuario admin. El primer usuario registrado será administrador.');
         }
 
-        // Inicializar instancias activas de WhatsApp (DESHABILITADO temporalmente)
-        // La inicialización automática está causando que el servidor se cuelgue
-        // Las instancias se pueden crear manualmente desde el dashboard
-        logger.info('Inicialización automática de instancias deshabilitada para evitar cuelgues del servidor');
+        // Auto-reconexión inteligente de instancias
+        setTimeout(async () => {
+            try {
+                const { WhatsappInstance } = require('./models');
+                
+                // Buscar instancias que estaban conectadas O que tienen sesión guardada
+                const instancesToReconnect = await WhatsappInstance.findAll({
+                    where: { 
+                        status: ['connected', 'connecting'] // Incluir connecting también
+                    }
+                });
+                
+                if (instancesToReconnect.length > 0) {
+                    logger.info(`🔄 Reconectando ${instancesToReconnect.length} instancias...`);
+                    
+                    for (const instance of instancesToReconnect) {
+                        try {
+                            // Verificar si existe sesión guardada
+                            const sessionPath = path.join(__dirname, '.wwebjs_auth', `session_${instance.id}`);
+                            const hasSession = fs.existsSync(sessionPath);
+                            
+                            logger.info(`📱 Instancia ${instance.id}: ${hasSession ? 'Tiene sesión guardada' : 'Sin sesión guardada'}`);
+                            
+                            if (hasSession) {
+                                // Marcar como connecting
+                                await instance.updateStatus('connecting', 'Reconectando con sesión guardada');
+                                
+                                // Inicializar con delay
+                                setTimeout(() => {
+                                    logger.info(`🚀 Iniciando reconexión de instancia ${instance.id}...`);
+                                    whatsappService.initializeInstance(instance.id).catch(error => {
+                                        logger.error(`❌ Error reconectando instancia ${instance.id}:`, error);
+                                    });
+                                }, 3000 * (instancesToReconnect.indexOf(instance) + 1)); // 3s delay entre cada una
+                            } else {
+                                // Sin sesión, marcar como desconectada
+                                await instance.updateStatus('disconnected', 'Sin sesión guardada');
+                                logger.warn(`⚠️ Instancia ${instance.id} sin sesión guardada, requiere nuevo QR`);
+                            }
+                            
+                        } catch (error) {
+                            logger.error(`Error preparando reconexión de instancia ${instance.id}:`, error);
+                        }
+                    }
+                } else {
+                    logger.info('ℹ️ No hay instancias para reconectar');
+                }
+            } catch (error) {
+                logger.error('Error en auto-reconexión:', error);
+            }
+        }, 8000); // Esperar 8 segundos para que todo se estabilice
+
+        // Iniciar Health Checker
+        const healthChecker = new HealthChecker(whatsappService);
+        healthChecker.start();
 
         // Iniciar el servidor
         const PORT = process.env.PORT || 3000;

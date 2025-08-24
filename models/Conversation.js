@@ -35,6 +35,22 @@ const Conversation = sequelize.define('Conversation', {
         allowNull: true,
         comment: 'URL del avatar del contacto'
     },
+    isGroup: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+        comment: 'Indica si es un grupo de WhatsApp'
+    },
+    groupDescription: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: 'Descripción del grupo (solo para grupos)'
+    },
+    groupParticipants: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Lista de participantes del grupo (solo para grupos)'
+    },
     status: {
         type: DataTypes.ENUM('inbox', 'pending', 'closed'),
         defaultValue: 'inbox',
