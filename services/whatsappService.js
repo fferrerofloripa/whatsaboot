@@ -172,7 +172,7 @@ class WhatsAppService {
             }
         });
 
-        // Evento de mensaje recibido
+        // Evento de mensaje recibido (solo entrantes)
         client.on('message', async (message) => {
             try {
                 const result = await this.handleIncomingMessage(message, instance);
@@ -193,6 +193,34 @@ class WhatsAppService {
                 }
             } catch (error) {
                 logger.error(`Error al manejar mensaje para instancia ${instanceId}:`, error);
+            }
+        });
+
+        // Evento de mensaje creado (TODOS los mensajes, incluyendo los enviados desde otros dispositivos)
+        client.on('message_create', async (message) => {
+            try {
+                // Solo procesar mensajes enviados por ti desde otros dispositivos
+                if (message.fromMe) {
+                    logger.info(`📤 Mensaje enviado desde otro dispositivo en instancia ${instanceId}: ${message.body}`);
+                    const result = await this.handleIncomingMessage(message, instance);
+                    
+                    // Emit real-time update via Socket.IO
+                    if (result && global.io) {
+                        global.io.emit('newMessage', {
+                            instanceId: instanceId,
+                            conversationId: result.conversationId,
+                            message: {
+                                body: message.body,
+                                content: message.body,
+                                direction: 'outgoing',
+                                sentAt: new Date()
+                            },
+                            contactName: result.contactName
+                        });
+                    }
+                }
+            } catch (error) {
+                logger.error(`Error procesando mensaje creado en instancia ${instanceId}:`, error);
             }
         });
 
@@ -252,6 +280,12 @@ class WhatsAppService {
             // Obtener información del chat (puede ser contacto individual o grupo)
             const chat = await message.getChat();
             const contactId = chat.id._serialized;
+            
+            // Filtrar mensajes de estado de WhatsApp
+            if (contactId === 'status@broadcast' || contactId.includes('status@broadcast')) {
+                logger.info('📱 Mensaje de estado ignorado:', contactId);
+                return;
+            }
             
             // Detectar si es un grupo
             const isGroup = chat.isGroup;
@@ -329,7 +363,8 @@ class WhatsAppService {
                 // Actualizar conversación existente
                 const updateData = {
                     contactAvatar: profilePicUrl, // Actualizar foto de perfil
-                    contactName: contactName, // Actualizar nombre (puede cambiar en grupos)
+                    // Solo actualizar nombre si no existe o si es un grupo (los grupos pueden cambiar de nombre)
+                    contactName: (conversation.contactName && !isGroup) ? conversation.contactName : contactName,
                     groupDescription: groupDescription, // Actualizar descripción del grupo
                     groupParticipants: groupParticipants, // Actualizar participantes del grupo
                     lastMessage: message.body,

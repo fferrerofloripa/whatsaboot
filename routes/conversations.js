@@ -57,6 +57,8 @@ router.get('/instance/:instanceId', isAuthenticated, canAccessInstance, async (r
         const where = { 
             whatsappInstanceId: instanceId, 
             isActive: true,
+            // Excluir mensajes de estado de WhatsApp
+            contactId: { [Op.not]: 'status@broadcast' },
             // Solo mostrar conversaciones que tienen lastMessage válido
             lastMessage: { 
                 [Op.and]: [
@@ -93,7 +95,10 @@ router.get('/instance/:instanceId', isAuthenticated, canAccessInstance, async (r
                     order: [['createdAt', 'DESC']]
                 }
             ],
-            order: [['lastMessageAt', 'DESC']],
+            order: [
+                ['isGroup', 'ASC'], // Grupos primero
+                ['lastMessageAt', 'DESC']
+            ],
             limit: parseInt(limit),
             offset: parseInt(offset)
         });
@@ -267,9 +272,13 @@ router.get('/:conversationId/messages', isAuthenticated, canAccessConversation, 
                     attributes: ['id', 'displayName', 'email']
                 }
             ],
-            order: [['sentAt', 'DESC']],
+            order: [
+                [require('sequelize').literal('COALESCE(`Message`.`sentAt`, `Message`.`createdAt`)'), 'DESC']
+            ],
             limit: parseInt(limit)
         });
+        
+
 
         res.json({
             success: true,

@@ -202,6 +202,8 @@
             window.currentInstanceId = instanceId;
             window.allGroups = [];
             window.allIndividuals = [];
+            window.updateInterval = null;
+            window.lastUpdateTime = Date.now();
             
             // Cargar primera página
             loadConversationsPage(instanceId, 1, false);
@@ -478,6 +480,51 @@
             });
         }
         
+        // Función para actualizaciones automáticas
+        function startAutoUpdates() {
+            // Limpiar intervalo anterior si existe
+            if (window.updateInterval) {
+                clearInterval(window.updateInterval);
+            }
+            
+            // Actualizar cada 30 segundos (reducido para evitar spam)
+            window.updateInterval = setInterval(function() {
+                if (!window.isLoading && window.currentInstanceId && document.visibilityState === 'visible') {
+                    console.log('🔄 Auto-actualizando conversaciones...');
+                    refreshConversations();
+                }
+            }, 30000);
+            
+            console.log('✅ Auto-actualizaciones iniciadas (cada 30s)');
+        }
+        
+        // Función para refrescar conversaciones sin resetear paginación
+        function refreshConversations() {
+            if (!window.currentInstanceId) return;
+            
+            fetch(`/api/conversations/instance/${window.currentInstanceId}?page=1&limit=10&timestamp=${Date.now()}`, {
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success && d.data?.conversations) {
+                    // Actualizar solo la primera página para ver nuevos mensajes
+                    var newGroups = d.data.conversations.filter(conv => conv.isGroup);
+                    var newIndividuals = d.data.conversations.filter(conv => !conv.isGroup);
+                    
+                    // Reemplazar los primeros elementos con los actualizados
+                    window.allGroups = [...newGroups, ...window.allGroups.slice(newGroups.length)];
+                    window.allIndividuals = [...newIndividuals, ...window.allIndividuals.slice(newIndividuals.length)];
+                    
+                    renderAllConversations();
+                    console.log('✅ Conversaciones actualizadas automáticamente');
+                }
+            })
+            .catch(e => {
+                console.warn('⚠️ Error en auto-actualización:', e.message);
+            });
+        }
+        
         // Función para renderizar un item de conversación
         function renderConversationItem(conv, container, isGroup) {
             // Create conversation item
@@ -572,6 +619,12 @@
                 this.style.borderLeft = '4px solid #3b82f6';
                 this.style.transform = 'translateX(4px)';
                 
+                // Clear unread counter for this conversation
+                var unreadBadge = this.querySelector('span[style*="background: #ef4444"]');
+                if (unreadBadge) {
+                    unreadBadge.remove();
+                }
+                
                 console.log('Selected conversation:', conv.contactName, 'ID:', conv.id, 'Type:', isGroup ? 'Group' : 'Individual');
                 loadMessages(conv.id, conv.contactName);
             });
@@ -613,9 +666,17 @@
                 '</div>';
             
             // Fetch messages
+            console.log('🔍 Fetching messages for conversation:', conversationId);
             fetch('/api/conversations/' + conversationId + '/messages', {credentials: 'include'})
-            .then(r => r.json())
+            .then(r => {
+                console.log('📡 Response status:', r.status);
+                if (!r.ok) {
+                    throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                }
+                return r.json();
+            })
             .then(data => {
+                console.log('📨 Messages response:', data);
                 if (data.success && data.data) {
                     var messages = data.data;
                     
@@ -886,13 +947,15 @@
         socket.on('newMessage', function(data) {
             console.log('📨 New message received:', data);
             
-            // Update conversation list (move to top and update last message)
-            updateConversationInList(data.conversationId, data.message, data.contactName);
-            
-            // If this conversation is currently open, add the message
-            var selectedConv = document.querySelector('.conversation-item.selected');
-            if (selectedConv && selectedConv.dataset.conversationId == data.conversationId) {
-                addMessageToChat(data.message, false); // false = incoming message
+            // Actualizar la conversación en la lista si es de la instancia actual
+            if (data.instanceId == window.currentInstanceId) {
+                updateConversationInList(data.conversationId, data.message, data.contactName);
+                
+                // If this conversation is currently open, add the message
+                var selectedConv = document.querySelector('.conversation-item.selected');
+                if (selectedConv && selectedConv.dataset.conversationId == data.conversationId) {
+                    addMessageToChat(data.message, false); // false = incoming message
+                }
             }
         });
         
@@ -921,11 +984,79 @@
                     timeSpan.textContent = now.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
                 }
                 
-                // Move to top
+                // Update unread counter (only if conversation is not currently selected)
+                var selectedConv = document.querySelector('.conversation-item.selected');
+                if (!selectedConv || selectedConv.dataset.conversationId != conversationId) {
+                    var unreadBadge = existingConv.querySelector('span[style*="background: #ef4444"]');
+                    if (unreadBadge) {
+                        // Increment existing counter
+                        var currentCount = parseInt(unreadBadge.textContent) || 0;
+                        unreadBadge.textContent = currentCount + 1;
+                    } else {
+                        // Create new unread badge
+                        var badgeContainer = existingConv.querySelector('div[style*="display: flex; align-items: center; gap: 8px;"]');
+                        if (badgeContainer) {
+                            var newBadge = document.createElement('span');
+                            newBadge.style.cssText = 'background: #ef4444; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; min-width: 18px; text-align: center;';
+                            newBadge.textContent = '1';
+                            badgeContainer.insertBefore(newBadge, badgeContainer.lastElementChild);
+                        }
+                    }
+                }
+                
+                // Move to top of its section (groups or individuals)
                 var container = document.getElementById('conversationsList');
                 if (container) {
-                    container.insertBefore(existingConv, container.firstChild);
+                    // Determine if it's a group or individual conversation
+                    var isGroupConv = existingConv.querySelector('h4').textContent.includes('👥');
+                    
+                    if (isGroupConv) {
+                        // Move to top of groups section
+                        var groupHeaders = container.querySelectorAll('h3');
+                        var groupHeader = null;
+                        for (var i = 0; i < groupHeaders.length; i++) {
+                            if (groupHeaders[i].textContent.includes('👥 Grupos')) {
+                                groupHeader = groupHeaders[i];
+                                break;
+                            }
+                        }
+                        if (groupHeader) {
+                            container.insertBefore(existingConv, groupHeader.nextElementSibling);
+                        } else {
+                            container.insertBefore(existingConv, container.firstChild);
+                        }
+                    } else {
+                        // Move to top of individuals section or after groups
+                        var individualHeaders = container.querySelectorAll('h3');
+                        var individualHeader = null;
+                        for (var i = 0; i < individualHeaders.length; i++) {
+                            if (individualHeaders[i].textContent.includes('👤')) {
+                                individualHeader = individualHeaders[i];
+                                break;
+                            }
+                        }
+                        if (individualHeader) {
+                            container.insertBefore(existingConv, individualHeader.nextElementSibling);
+                        } else {
+                            // If no individual header, add after all groups
+                            var allConversations = container.querySelectorAll('[data-conversation-id]');
+                            var lastGroupConv = null;
+                            for (var i = 0; i < allConversations.length; i++) {
+                                var h4 = allConversations[i].querySelector('h4');
+                                if (h4 && h4.textContent.includes('👥')) {
+                                    lastGroupConv = allConversations[i];
+                                }
+                            }
+                            if (lastGroupConv) {
+                                container.insertBefore(existingConv, lastGroupConv.nextElementSibling);
+                            } else {
+                                container.insertBefore(existingConv, container.firstChild);
+                            }
+                        }
+                    }
                 }
+                
+                console.log('✅ Conversación actualizada:', contactName, '- Nuevo mensaje:', message.body);
             }
         }
         
@@ -1051,7 +1182,23 @@
             autoLoadConversations();
             // Configurar scroll infinito después de cargar
             setTimeout(setupInfiniteScroll, 2000);
+            // Iniciar auto-actualizaciones después de cargar
+            setTimeout(startAutoUpdates, 3000);
         }, 1000);
+        
+        // Pausar actualizaciones cuando la página no esté visible
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                console.log('⏸️ Pausando auto-actualizaciones (página oculta)');
+                if (window.updateInterval) {
+                    clearInterval(window.updateInterval);
+                    window.updateInterval = null;
+                }
+            } else if (document.visibilityState === 'visible') {
+                console.log('▶️ Reanudando auto-actualizaciones (página visible)');
+                startAutoUpdates();
+            }
+        });
         
         // Test API function
         function testAPI() {
